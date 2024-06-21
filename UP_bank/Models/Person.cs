@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,6 +20,7 @@ namespace Models
         public string Cpf { get; set; }
         public string Name { get; set; }
         public DateTime DtBirth { get; set; }
+        [BsonRepresentation(BsonType.String)]         // Convert Char to string
         public char Sex { get; set; }
         public double Income { get; set; }
         public string Phone { get; set; }
@@ -25,9 +28,11 @@ namespace Models
         [NotMapped]
         public Address Address { get; set; }
         [JsonIgnore]
+        [BsonIgnore] // Ignore in document
         [StringLength(9)]
         public string AddressZipCode { get; set; }
         [JsonIgnore]
+        [BsonIgnore] // Ignore in document
         public string AddressNumber { get; set; }
     }
 }
