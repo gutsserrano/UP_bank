@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Models.DTO;
+using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
 namespace AccountAPI.Controllers
 {
@@ -15,35 +17,73 @@ namespace AccountAPI.Controllers
             _accountService = service;
         }
 
-        [HttpGet("{number}")]
-        // https://localhost:7244/api/accounts/5725 test
-        public async Task<ActionResult<Account>> Get(string number)
+        [HttpGet("{number},{deleted}")]
+        // https://localhost:7244/api/accounts/5725,0 test GET
+        public async Task<ActionResult<Account>> Get(string number, int deleted)
         {
-            return await _accountService.Get(number);
-        }
+            var account = await _accountService.Get(number, deleted);
 
-        [HttpPost("1")]
-        //https://localhost:7244/api/accounts/1 test
-        public async Task<ActionResult<Account>> CreateAccount()
-        {
-            var account = CriaConta();
-            await _accountService.CreateAccount(account);
+            if (account == null)
+                return NotFound();
+
             return Ok(account);
         }
 
-        
-        [HttpPost("2/{number}")]
-        //https://localhost:7244/api/accounts/2/5725 test
-        public async Task<ActionResult<Account>> CreateTransaction(string number)
+        [HttpPost]
+        //https://localhost:7244/api/accounts/ test POST
+        // aqui deve receber Account json
+        public async Task<ActionResult<Account>> Post()
         {
-            var account = await _accountService.CreateTransaction(number);
+            var account = CriaContaTemp(); // temporario
+            await _accountService.Post(account);
+            return Ok(account);
+        }
+
+        [HttpPatch]
+        //https://localhost:7244/api/accounts/ test PATCH
+        public async Task<ActionResult<Account>> Patch(AccountRestrictionDTO dto)
+        {
+            Account account = await _accountService.Get(dto.Number, 0);
+
+            if (account == null)
+                return NotFound();
+
+            if (dto.Restriction == account.Restriction)
+                return BadRequest($"Account is already in restriction status {account.Restriction}");
+
+            account = await _accountService.Patch(dto, account);
+            return Ok(account);
+        }
+
+        [HttpDelete("{number}")]
+        public async Task<ActionResult> Delete(string number)
+        {
+            Account account = await _accountService.Get(number, 0);
+
+            if (account == null)
+                return NotFound();
+
+            await _accountService.Delete(account);
+            return Ok("Account successfully deleted!");
+        }
+
+        [HttpPost("restore/{number}")]
+        public async Task<ActionResult<Account>> Restore(string number)
+        {
+            Account account = await _accountService.Get(number, 1);
+
+            if (account == null)
+                return NotFound();
+
+            await _accountService.Restore(account);
             return Ok(account);
         }
 
 
-
-        public Account CriaConta()
+        public Account CriaContaTemp()
         {
+            // Dados de Entrada
+            // Address, lista de Customers, lista de Employees e Agencia
             Address address = new Address
             {
                 City = "Araraquara",
@@ -54,7 +94,11 @@ namespace AccountAPI.Controllers
                 ZipCode = "14802-020"
             };
 
-            Employee employee = new Employee
+            List<Customer> customerList = new List<Customer>();
+            List<Employee> employeeList = new List<Employee>();
+
+
+            employeeList.Add(new Employee
             {
                 Name = "Joao da Silva",
                 Phone = "163333-1111",
@@ -68,9 +112,10 @@ namespace AccountAPI.Controllers
                 Email = "funcionario@google.com",
                 Income = 2000,
                 Manager = false
-            };
+            }
+            );
 
-            Employee employee2 = new Employee
+            employeeList.Add(new Employee
             {
                 Name = "Maria das Neves",
                 Phone = "163333-2222",
@@ -84,18 +129,10 @@ namespace AccountAPI.Controllers
                 Email = "gerente@google.com",
                 Income = 4000,
                 Manager = true
-            };
+            });
 
-            Agency agency = new Agency
-            {
-                Cnpj = "12.345.678/0001-10",
-                Number = "0064",
-                Restriction = false,
-                Employees = new List<Employee> { employee, employee2 },
-                Address = address
-            };
 
-            Customer customer = new Customer
+            customerList.Add(new Customer
             {
                 Address = address,
                 AddressNumber = "200",
@@ -108,9 +145,10 @@ namespace AccountAPI.Controllers
                 Restriction = false,
                 Sex = 'M',
                 DtBirth = new DateTime(1992, 10, 10)
-            };
+            });
 
-            Customer customer2 = new Customer
+
+            customerList.Add(new Customer
             {
                 Address = address,
                 AddressNumber = "200",
@@ -123,30 +161,32 @@ namespace AccountAPI.Controllers
                 Restriction = false,
                 Sex = 'M',
                 DtBirth = new DateTime(2015, 5, 5)
-            };
+            });
 
-            CreditCard creditCard = new CreditCard
+
+            // Dados da Agencia
+            Agency agency = new Agency
             {
-                CVV = "007",
-                ExpirationDate = new DateTime(2030, 12, 31),
-                Flag = "Visa",
-                Limit = 10000,
-                Name = "Pedro Silva",
-                Number = 1234567899990000
+                Cnpj = "12.345.678/0001-10",
+                Number = "0064",
+                Restriction = false,
+                Employees = employeeList,
+                Address = address
             };
 
+            // Cria Account
             Account account = new Account
             {
                 Agency = agency,
-                Balance = 500,
-                CreditCard = creditCard,
                 Number = "5725",
                 Date = DateTime.Today,
-                Overdraft = 1000,
                 Profile = EProfile.Normal,
-                Restriction = false,
-                Customers = new List<Customer> { customer, customer2 },
-                Extract = null
+                Customers = customerList,
+                Overdraft = 1000,
+                Balance = 500,
+                Restriction = true, // restrito true até ser aceito pelo gerente
+                CreditCard = null, // nulo até gerar o cartao
+                Extract = null // nulo pois nao tem transacoes ainda
             };
 
             return account;
@@ -155,3 +195,108 @@ namespace AccountAPI.Controllers
 
     }
 }
+
+// JSON DE POST
+/*
+{
+    "number": "5725",
+    "agency": {
+        "number": "0064",
+        "address": {
+            "zipCode": "14802-020",
+            "number": "100",
+            "street": "Rua 7 de Setembro",
+            "complement": "",
+            "city": "Araraquara",
+            "state": "SP"
+        },
+        "cnpj": "12.345.678/0001-10",
+        "employees": [
+            {
+                "manager": false,
+                "register": 10,
+                "cpf": "111.222.333-45",
+                "name": "Joao da Silva",
+                "dtBirth": "1990-10-05T00:00:00",
+                "sex": "M",
+                "income": 2000,
+                "phone": "163333-1111",
+                "email": "funcionario@google.com",
+                "address": {
+                    "zipCode": "14802-020",
+                    "number": "100",
+                    "street": "Rua 7 de Setembro",
+                    "complement": "",
+                    "city": "Araraquara",
+                    "state": "SP"
+                }
+            },
+            {
+                "manager": true,
+                "register": 5,
+                "cpf": "555.666.777-89",
+                "name": "Maria das Neves",
+                "dtBirth": "1970-02-05T00:00:00",
+                "sex": "F",
+                "income": 4000,
+                "phone": "163333-2222",
+                "email": "gerente@google.com",
+                "address": {
+                    "zipCode": "14802-020",
+                    "number": "100",
+                    "street": "Rua 7 de Setembro",
+                    "complement": "",
+                    "city": "Araraquara",
+                    "state": "SP"
+                }
+            }
+        ],
+        "restriction": false
+    },
+    "customers": [
+        {
+            "restriction": false,
+            "cpf": "444.777.222-00",
+            "name": "Pedro Henrique Silva",
+            "dtBirth": "1992-10-10T00:00:00",
+            "sex": "M",
+            "income": 5000,
+            "phone": "193331-1222",
+            "email": "cliente1@google.com",
+            "address": {
+                "zipCode": "14802-020",
+                "number": "100",
+                "street": "Rua 7 de Setembro",
+                "complement": "",
+                "city": "Araraquara",
+                "state": "SP"
+            }
+        },
+        {
+            "restriction": false,
+            "cpf": "444.777.222-00",
+            "name": "Joaozinho Silva",
+            "dtBirth": "2015-05-05T00:00:00",
+            "sex": "M",
+            "income": 5000,
+            "phone": "193331-1222",
+            "email": "cliente2@google.com",
+            "address": {
+                "zipCode": "14802-020",
+                "number": "100",
+                "street": "Rua 7 de Setembro",
+                "complement": "",
+                "city": "Araraquara",
+                "state": "SP"
+            }
+        }
+    ],
+    "restriction": false,
+    "creditCard": null,
+    "overdraft": 1000,
+    "profile": 1,
+    "date": "2024-06-22T00:00:00-03:00",
+    "balance": 500,
+    "extract": null
+}
+*/
