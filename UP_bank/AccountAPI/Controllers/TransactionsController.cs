@@ -54,9 +54,9 @@ namespace AccountAPI.Controllers
             var validation = await ValidateTransaction(accNumber, dto);
             if (validation != "Ok") return BadRequest(validation);
 
-            var transaction = await _transactionService.Post(account, dto);
+            var transaction = await _transactionService.CreateTransactions(account, dto);
 
-            await _accountService.UpdateBalance(transaction, account);
+            await _accountService.UpdateBalances(transaction, account);
 
             return Ok(transaction);
         }
@@ -69,20 +69,26 @@ namespace AccountAPI.Controllers
 
             if (Type == 0 || Type == 3 || Type == 4) // Subtract balance
             {
-                if (dto.AccountDestinyNumber == null && Type == 3) return "Destiny account not informed!";
+                if (accountDestiny == null && Type == 3) return "Destiny account not located!";
 
                 if (dto.Price > account.Balance) return "Account Balance is lower than Transaction value!";
+            }
+
+            if (accountDestiny == null)
+            {
+                if (account.Agency.Restriction == true) return "Account Agency is restricted!";
+                if (account.Restriction == true) return "Account Origin is restricted!";
+                if (account.Customers[0].Restriction == true) return "Account Origin Customer is restricted!";
 
             }
-            if (account.Agency.Restriction == true) return "Account Agency is restricted!";
-            if (accountDestiny.Agency.Restriction == true) return "Account Destiny Agency is restricted!";
+            else
+            {
+                if (accountDestiny.Agency.Restriction == true) return "Account Destiny Agency is restricted!";
 
-            if (account.Restriction == true) return "Account Origin is restricted!";
-            if (accountDestiny.Restriction == true) return "Account Destiny is restricted!";
+                if (accountDestiny.Restriction == true) return "Account Destiny is restricted!";
 
-            if (account.Customers[0].Restriction == true) return "Account Origin Customer is restricted!";
-            if (accountDestiny.Customers[0].Restriction == true) return "Account Destiny Customer is restricted!";
-
+                if (accountDestiny.Customers[0].Restriction == true) return "Account Destiny Customer is restricted!";
+            }
 
             return "Ok";
         }

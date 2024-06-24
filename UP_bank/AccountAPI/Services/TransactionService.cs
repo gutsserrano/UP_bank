@@ -46,20 +46,26 @@ namespace AccountAPI.Services
             return transactions;
         }
 
-        public async Task<Transactions> Post(Account account, TransactionsDTO dto)
+        public async Task<Transactions> CreateTransactions(Account accountOrigin, TransactionsDTO dto)
         {
             int Id = 0;
-
+            int Type = (int)dto.Type;
             List<Transactions> transactions = new List<Transactions>();
 
+            #region Account Origin
             // Load all existing extracts
-            if (account.Extract != null)
+            if (accountOrigin.Extract != null)
             {
-                foreach (var item in account.Extract)
+                foreach (var item in accountOrigin.Extract)
                 {
                     transactions.Add(item);
                     Id = item.Id;
                 }
+            }
+
+            if (Type == 0 || Type == 3 || Type == 4)
+            {
+                dto.Price = dto.Price * -1;
             }
 
             // Set transaction values
@@ -73,11 +79,45 @@ namespace AccountAPI.Services
             // Add transaction to list
             transactions.Add(transaction);
 
-            var filter = Builders<Account>.Filter.Eq("Number", account.Number);
+            var filter = Builders<Account>.Filter.Eq("Number", accountOrigin.Number);
             var update = Builders<Account>.Update.Set("Extract", transactions);
             await _accountCollection.UpdateOneAsync(filter, update);
+            #endregion
+
+            #region Account Destiny
+            //////////// Account Destiny
+            // Load all existing extracts
+            if (accountDestiny != null)
+            {
+                transactions = new List<Transactions>();
+                Id = 0;
+                if (accountDestiny.Extract != null)
+                {
+                    foreach (var item in accountDestiny.Extract)
+                    {
+                        transactions.Add(item);
+                        Id = item.Id;
+                    }
+                }
+
+                // Set transaction values
+                dto.Price = dto.Price * -1;
+                Transactions transaction2 = new Transactions(dto);
+                transaction2.Id = Id + 1;
+                transaction2.Date = DateTime.Now;
+                transaction2.Destiny = accountOrigin;
+                // Add transaction to list
+                transactions.Add(transaction);
+
+                var filterDestiny = Builders<Account>.Filter.Eq("Number", accountDestiny.Number);
+                var updateDestiny = Builders<Account>.Update.Set("Extract", transactions);
+                await _accountCollection.UpdateOneAsync(filterDestiny, updateDestiny);
+            }
+            #endregion
+
+
+            // Return Origin Transaction
             return transaction;
         }
-
     }
 }
