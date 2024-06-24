@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Models.DTO
+namespace Models
 {
-    public class AccountRestrictionDTO
+    public enum ETransactionType
     {
-        public bool Restriction { get; set; }
+        Sent,
+        Received
     }
 }

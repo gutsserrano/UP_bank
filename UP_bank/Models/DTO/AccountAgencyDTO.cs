@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Models.DTO
 {
-    public class AccountRestrictionDTO
+    public class AccountAgencyDTO
     {
+        public string Number { get; set; }
         public bool Restriction { get; set; }
     }
 }

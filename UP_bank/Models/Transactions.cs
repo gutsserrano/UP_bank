@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Models.DTO;
 
 namespace Models
 {
@@ -20,8 +21,20 @@ namespace Models
         [BsonRepresentation(BsonType.String)]         // Convert Enum to string in document
         public EType Type { get; set; }
         [BsonRequired]
-        public Account? Destiny { get; set; }
+        //public Account? Destiny { get; set; }
+        public AccountTransactionDTO? Account { get; set; }
         [BsonRequired]
         public double Price { get; set; }
+
+        public Transactions()
+        {
+            
+        }
+
+        public Transactions(TransactionsDTO dto)
+        {
+            this.Type = dto.Type;
+            this.Price = dto.Price;
+        }
     }
 }
