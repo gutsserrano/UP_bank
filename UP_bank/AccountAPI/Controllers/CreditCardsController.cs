@@ -34,7 +34,7 @@ namespace AccountAPI.Controllers
 
         [HttpPost("{accNumber}")]
         // https://localhost:7244/api/creditcards/5725 test
-        public async Task<ActionResult<CreditCard>> Post(string accNumber, CreditCard creditCard)
+        public async Task<ActionResult<CreditCard>> Post(string accNumber)
         {
             var account = await _creditCardService.GetAccount(accNumber);
 
@@ -44,8 +44,16 @@ namespace AccountAPI.Controllers
             if (account.Restriction == true)
                 return BadRequest("Account is restricted!");
 
-            return Ok(await _creditCardService.Post(accNumber, creditCard));
+            return Ok(await _creditCardService.Post(account));
         }
 
+        [HttpPut("{accNumber}, {cardNumber}")]
+        // https://localhost:7244/api/creditcards/5725,4920566877197436 test
+        public async Task<ActionResult<CreditCard>> Active(string accNumber, long cardNumber)
+        {
+            var creditCard = await _creditCardService.ActiveCard(accNumber, cardNumber);
+
+            return Ok(creditCard);
+        }
     }
 }
