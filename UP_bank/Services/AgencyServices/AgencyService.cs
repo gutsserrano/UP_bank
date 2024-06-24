@@ -9,11 +9,11 @@ namespace Services.AgencyServices
 {
     public class AgencyService
     {
-        public List<Employee> GetEmployees(List<AgencyEmployee> agencyEmployees)
+        public async Task<List<Employee>> GetEmployees(List<AgencyEmployee> agencyEmployees)
         {
             // Este método deve buscar os funcionarios cadastrados a partir da lista de cpf passados como argumento
             Random random = new Random();
-            int count = random.Next(1, 10);
+            int count = random.Next(1, 6);
 
             List<Employee> employees = new List<Employee>();
             for(int i = 0; i < count; i++)

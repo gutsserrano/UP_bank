@@ -98,13 +98,29 @@ namespace UPBank.AgencyAPI.Controllers
                 return Problem("Entity set 'UPBankAgencyAPIContext.Agency'  is null.");
             }
 
+            List <Employee> employees = _agencyService.GetEmployees(agencyDTO.EmployeesCpf).Result;
+
+            // Populando o agencyEmployees apenas enquanto o método GetEmployees não é implementado
             List<AgencyEmployee> agencyEmployees = agencyDTO.EmployeesCpf;
+            foreach (var item in employees)
+            {
+                agencyEmployees.Add(new AgencyEmployee
+                {
+                    Cpf = item.Cpf
+                });
+            }
+
+            if (!employees.Any(e => e.Manager))
+            {
+                return BadRequest("The agency must contains at least one Manager");
+            }
 
             var agency = new Agency
             {
                 Number = agencyDTO.Number,
                 Cnpj = agencyDTO.Cnpj,
                 Restriction = agencyDTO.Restriction,
+                Employees = employees,
                 EmployeesCpf = agencyEmployees,
                 AddressZipCode = agencyDTO.AddressDTO.ZipCode,
                 AddressNumber = agencyDTO.AddressDTO.Number
