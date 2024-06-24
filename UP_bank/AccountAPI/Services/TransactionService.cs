@@ -1,5 +1,6 @@
 ﻿using AccountAPI.Settings;
 using Models;
+using Models.DTO;
 using MongoDB.Driver;
 
 namespace AccountAPI.Services
@@ -45,7 +46,7 @@ namespace AccountAPI.Services
             return transactions;
         }
 
-        public async Task<Transactions> Post(Account account, Transactions transaction)
+        public async Task<Transactions> Post(Account account, TransactionsDTO dto)
         {
             int Id = 0;
 
@@ -61,8 +62,15 @@ namespace AccountAPI.Services
                 }
             }
 
-            // Set the Id for the next transaction
+            // Set transaction values
+            var accountDestiny = await GetAccount(dto.AccountDestinyNumber);
+
+            Transactions transaction = new Transactions(dto);
             transaction.Id = Id + 1;
+            transaction.Date = DateTime.Now;
+            transaction.Destiny = accountDestiny;
+
+            // Add transaction to list
             transactions.Add(transaction);
 
             var filter = Builders<Account>.Filter.Eq("Number", account.Number);

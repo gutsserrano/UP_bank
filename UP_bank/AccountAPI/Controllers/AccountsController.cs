@@ -51,7 +51,7 @@ namespace AccountAPI.Controllers
             if (dto.Restriction == account.Restriction)
                 return BadRequest($"Account is already in restriction status {account.Restriction}");
 
-            account = await _accountService.Patch(dto, account);
+            account = await _accountService.UpdateRestriction(dto, account);
             return Ok(account);
         }
 

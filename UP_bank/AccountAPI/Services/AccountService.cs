@@ -38,13 +38,46 @@ namespace AccountAPI.Services
             return account;
         }
 
-        public async Task<Account> Patch(AccountRestrictionDTO dto, Account account)
+        public async Task<Account> UpdateRestriction(AccountRestrictionDTO dto, Account account)
         {
             var filter = Builders<Account>.Filter.Eq("Number", dto.Number);
             var update = Builders<Account>.Update.Set("Restriction", dto.Restriction);
             await _accountCollection.UpdateOneAsync(filter, update);
 
             return await _accountCollection.Find(x => x.Number == dto.Number).FirstOrDefaultAsync();
+        }
+
+        public async Task<Account> UpdateBalance(Transactions transaction, Account account)
+        {
+            int Type = (int)transaction.Type;
+            double balance = 0;
+            var accountDestiny = await Get(transaction.Destiny.Number, 0);
+
+            // Update Account Origin Balance
+            if (Type == 0 || Type == 3 || Type == 4) // Subtract balance
+            {
+                balance = (account.Balance - transaction.Price);
+            }
+            else
+            {
+                balance = (account.Balance + transaction.Price);
+            }
+            
+            var filter = Builders<Account>.Filter.Eq("Number", account.Number);
+            var update = Builders<Account>.Update.Set("Balance", balance);
+            await _accountCollection.UpdateOneAsync(filter, update);
+
+            // Update Account Destiny Balance
+            if (accountDestiny != null)
+            {
+                balance = accountDestiny.Balance + transaction.Price;
+                var filterDestiny = Builders<Account>.Filter.Eq("Number", account.Number);
+                var updateDestiny = Builders<Account>.Update.Set("Balance", balance);
+                await _accountCollection.UpdateOneAsync(filterDestiny, updateDestiny);
+            }
+
+            // Return Origin account info
+            return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
         }
 
         public async Task<Account> Delete(Account account)
