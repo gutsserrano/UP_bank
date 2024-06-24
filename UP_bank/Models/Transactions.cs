@@ -21,7 +21,8 @@ namespace Models
         [BsonRepresentation(BsonType.String)]         // Convert Enum to string in document
         public EType Type { get; set; }
         [BsonRequired]
-        public Account? Destiny { get; set; }
+        //public Account? Destiny { get; set; }
+        public AccountDTOTransaction? Destiny { get; set; }
         [BsonRequired]
         public double Price { get; set; }
 

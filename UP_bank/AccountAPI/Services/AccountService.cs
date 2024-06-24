@@ -38,7 +38,7 @@ namespace AccountAPI.Services
             return account;
         }
 
-        public async Task<Account> UpdateRestriction(AccountRestrictionDTO dto, Account account)
+        public async Task<Account> UpdateAccountRestriction(AccountRestrictionDTO dto, Account account)
         {
             var filter = Builders<Account>.Filter.Eq("Number", dto.Number);
             var update = Builders<Account>.Update.Set("Restriction", dto.Restriction);
@@ -47,7 +47,7 @@ namespace AccountAPI.Services
             return await _accountCollection.Find(x => x.Number == dto.Number).FirstOrDefaultAsync();
         }
 
-        public async Task<Account> UpdateBalances(Transactions transaction, Account account)
+        public async Task<Account> UpdateAccountBalance(Transactions transaction, Account account)
         {
             int Type = (int)transaction.Type;
             double balance = 0;
@@ -66,7 +66,7 @@ namespace AccountAPI.Services
             // Update Account Destiny Balance
             if (accountDestiny != null)
             {
-                balance = accountDestiny.Balance + transaction.Price;
+                balance = accountDestiny.Balance + (transaction.Price * -1);
                 var filterDestiny = Builders<Account>.Filter.Eq("Number", accountDestiny.Number);
                 var updateDestiny = Builders<Account>.Update.Set("Balance", balance);
                 await _accountCollection.UpdateOneAsync(filterDestiny, updateDestiny);

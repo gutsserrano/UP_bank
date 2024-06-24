@@ -51,7 +51,7 @@ namespace AccountAPI.Controllers
             if (dto.Restriction == account.Restriction)
                 return BadRequest($"Account is already in restriction status {account.Restriction}");
 
-            account = await _accountService.UpdateRestriction(dto, account);
+            account = await _accountService.UpdateAccountRestriction(dto, account);
             return Ok(account);
         }
 
@@ -178,12 +178,12 @@ namespace AccountAPI.Controllers
             Account account = new Account
             {
                 Agency = agency,
-                Number = "5725",
+                Number = "5726",
                 Date = DateTime.Today,
                 Profile = EProfile.Normal,
                 Customers = customerList,
                 Overdraft = 1000,
-                Balance = 500,
+                Balance = 0,
                 Restriction = true, // restrito true até ser aceito pelo gerente
                 CreditCard = null, // nulo até gerar o cartao
                 Extract = null // nulo pois nao tem transacoes ainda
