@@ -24,6 +24,12 @@ namespace Services.AgencyServices
             return employees;
         }
 
+        public async Task<Address> GetAddress(string zipCode, string number)
+        {
+            // Este método deve buscar o endereço cadastrado a partir do cep e número passados como argumento
+            return GenerateRandomAddress();
+        }
+
         private Employee GenerateRandomEmployee()
         {
             Address address = GenerateRandomAddress();

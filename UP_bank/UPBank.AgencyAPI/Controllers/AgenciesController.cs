@@ -32,22 +32,57 @@ namespace UPBank.AgencyAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Agency>>> GetAgency()
         {
-          if (_context.Agency == null)
-          {
-              return NotFound();
-          }
-            return await _context.Agency.ToListAsync();
+            if (_context.Agency == null)
+            {
+                return NotFound();
+            }
+
+            List<Agency> agencies = await _context.Agency.ToListAsync();
+
+            foreach (var item in agencies)
+            {
+                Address? address = _addressService.GetAddress(new AddressDTO()
+                {
+                    ZipCode = item.AddressZipCode,
+                    Number = item.AddressNumber
+                }).Result;
+
+                if (address == null)
+                {
+                    return NotFound("Address not found.");
+                }
+
+                item.Address = address;
+            }
+
+            // Fazer a mesma busca com a lista de funcionarios quando a API estiver funcionando completamente
+
+            return agencies;
         }
 
         // GET: api/Agencies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Agency>> GetAgency(string id)
         {
-          if (_context.Agency == null)
-          {
-              return NotFound();
-          }
+            if (_context.Agency == null)
+            {
+                return NotFound();
+            }
+
             var agency = await _context.Agency.FindAsync(id);
+
+            Address? address = _addressService.GetAddress(new AddressDTO()
+            {
+                ZipCode = agency.AddressZipCode,
+                Number = agency.AddressNumber
+            }).Result;
+
+            if (address == null)
+            {
+                return NotFound("Address not found.");
+            }
+
+            agency.Address = address;
 
             if (agency == null)
             {
