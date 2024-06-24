@@ -18,6 +18,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerTest", "CustomerTes
 		{FEEFBBA9-3552-443B-9AF0-87508C567B5A} = {FEEFBBA9-3552-443B-9AF0-87508C567B5A}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UPBank.AddressAPI", "UPBank.AddressAPI\UPBank.AddressAPI.csproj", "{0731A6B6-DF2C-48D6-B623-3EF39E6352C7}"
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,14 +33,6 @@ Global
 		{21B68C3D-1870-4670-A50F-579C7B73BE42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21B68C3D-1870-4670-A50F-579C7B73BE42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21B68C3D-1870-4670-A50F-579C7B73BE42}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FEEFBBA9-3552-443B-9AF0-87508C567B5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FEEFBBA9-3552-443B-9AF0-87508C567B5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FEEFBBA9-3552-443B-9AF0-87508C567B5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FEEFBBA9-3552-443B-9AF0-87508C567B5A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D4657A31-5DC9-4B12-819B-8A46440BFB9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4657A31-5DC9-4B12-819B-8A46440BFB9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4657A31-5DC9-4B12-819B-8A46440BFB9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4657A31-5DC9-4B12-819B-8A46440BFB9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
