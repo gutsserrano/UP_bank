@@ -55,6 +55,22 @@ namespace AccountAPI.Controllers
             return Ok(account);
         }
 
+        [HttpPut("5/{agencyNumber}")]
+        public async Task<ActionResult<Account>> UpdateAccountAgencyRestriction(string agencyNumber, AgencyRestrictionDTO agencyRestrictionDTO)
+        {
+            await _accountService.UpdateAccountAgencyRestriction(agencyNumber, agencyRestrictionDTO);
+
+            return Ok();
+        }
+
+        [HttpPut("6/{customerCPF}")]
+        public async Task<ActionResult<Account>> UpdateAccountCustomerRestriction(string customerCPF, CustomerRestrictionDTO customerRestrictionDTO)
+        {
+            await _accountService.UpdateAccountCustomerRestriction(customerCPF, customerRestrictionDTO);
+
+            return Ok();
+        }
+
         [HttpDelete("{number}")]
         public async Task<ActionResult> Delete(string number)
         {

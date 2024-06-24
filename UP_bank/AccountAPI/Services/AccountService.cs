@@ -38,6 +38,41 @@ namespace AccountAPI.Services
             return account;
         }
 
+        public async Task UpdateAccountAgencyRestriction(string agencyNumber, AgencyRestrictionDTO agencyRestrictionDTO)
+        {
+            var accounts = await _accountCollection.Find(Builders<Account>.Filter.Empty).ToListAsync();
+            foreach (var account in accounts)
+            {
+                if (account.Agency.Number == agencyNumber)
+                    account.Agency.Restriction = agencyRestrictionDTO.Restriction;
+            }
+
+            foreach (var item in accounts)
+            {
+                var filter = Builders<Account>.Filter.Eq("Number", item.Number);
+                var update = Builders<Account>.Update.Set("Agency.Restriction", item.Agency.Restriction);
+                await _accountCollection.UpdateOneAsync(filter, update);
+            }
+        }
+
+        public async Task UpdateAccountCustomerRestriction(string customerCPF, CustomerRestrictionDTO customerRestrictionDTO)
+        {
+            var accounts = await _accountCollection.Find(Builders<Account>.Filter.Empty).ToListAsync();
+            var cpfMask = Convert.ToUInt64(customerCPF).ToString(@"000\.000\.000\-00");
+            foreach (var account in accounts)
+            {
+                account.Customers.Find(c => c.Cpf == cpfMask).Restriction = customerRestrictionDTO.Restriction;
+            }
+
+            foreach (var item in accounts)
+            {
+                var filter = Builders<Account>.Filter.Eq("Number", item.Number);
+                var update = Builders<Account>.Update.Set("Customers", item.Customers);
+                await _accountCollection.UpdateOneAsync(filter, update);
+            }
+
+        }
+
         public async Task<Account> UpdateAccountRestriction(AccountRestrictionDTO dto, Account account)
         {
             var filter = Builders<Account>.Filter.Eq("Number", dto.Number);
