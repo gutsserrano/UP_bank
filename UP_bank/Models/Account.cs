@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Models.DTO;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -14,8 +15,10 @@ namespace Models
     {
         [BsonId]
         public string Number { get; set; }
-        public Agency Agency { get; set; }
-        public List<Customer> Customers { get; set; }
+        //public Agency Agency { get; set; }
+        public AccountAgencyDTO Agency { get; set; }
+        //public List<Customer> Customers { get; set; }
+        public List<AgencyCustomerDTO> Customers { get; set; }
         public bool Restriction { get; set; }
         public CreditCard CreditCard { get; set; }
         public double Overdraft { get; set; }

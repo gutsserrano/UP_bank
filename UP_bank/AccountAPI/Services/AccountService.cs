@@ -75,11 +75,11 @@ namespace AccountAPI.Services
 
         public async Task<Account> UpdateAccountRestriction(AccountRestrictionDTO dto, Account account)
         {
-            var filter = Builders<Account>.Filter.Eq("Number", dto.Number);
+            var filter = Builders<Account>.Filter.Eq("Number", account.Number);
             var update = Builders<Account>.Update.Set("Restriction", dto.Restriction);
             await _accountCollection.UpdateOneAsync(filter, update);
 
-            return await _accountCollection.Find(x => x.Number == dto.Number).FirstOrDefaultAsync();
+            return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
         }
 
         public async Task<Account> UpdateAccountBalance(Transactions transaction, Account account)
@@ -88,8 +88,8 @@ namespace AccountAPI.Services
             double balance = 0;
             Account accountDestiny = null;
 
-            if (transaction.Destiny != null)
-                accountDestiny = await Get(transaction.Destiny.Number, 0);
+            if (transaction.Account != null)
+                accountDestiny = await Get(transaction.Account.Number, 0);
 
             // Update Account Origin Balance
             balance = (account.Balance + transaction.Price);

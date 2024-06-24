@@ -22,7 +22,7 @@ namespace Models
         public EType Type { get; set; }
         [BsonRequired]
         //public Account? Destiny { get; set; }
-        public AccountDTOTransaction? Destiny { get; set; }
+        public AccountTransactionDTO? Account { get; set; }
         [BsonRequired]
         public double Price { get; set; }
 

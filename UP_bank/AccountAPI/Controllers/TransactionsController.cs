@@ -18,15 +18,15 @@ namespace AccountAPI.Controllers
             _accountService = accountService;
         }
 
-        [HttpGet("{accNumber},{id}")]
-        public async Task<ActionResult<Transactions>> Get(string accNumber, int id)
+        [HttpGet("account/{accNumber}/id/{id}")]
+        public async Task<ActionResult<Transactions>> GetExtractId(string accNumber, int id)
         {
             var account = await _transactionService.GetAccount(accNumber);
             if (account == null)
                 return NotFound("Account not found!");
 
             Transactions transactions = null;
-            transactions = await _transactionService.Get(account, id);
+            transactions = await _transactionService.GetExtractId(account, id);
 
             if (transactions == null)
                 return NotFound("Account does not have an extract with this id!");
@@ -34,19 +34,34 @@ namespace AccountAPI.Controllers
             return Ok(transactions);
         }
 
-        [HttpGet("{accNumber}")]
-        public async Task<ActionResult<List<Transactions>>> GetAll(string accNumber)
+        [HttpGet("account/{accNumber}/type/{type}")]
+        public async Task<ActionResult<Transactions>> GetExtractType(string accNumber, int type)
         {
-            List<Transactions> transactions = null;
-            transactions = await _transactionService.GetAll(accNumber);
-            if (transactions == null)
-                return NotFound();
+            if (type > 4) return BadRequest("This type does not exist.");
+
+            var account = await _transactionService.GetAccount(accNumber);
+            if (account == null) return NotFound("Account not found!");
+
+            Transactions transactions = null;
+            transactions = await _transactionService.GetExtractType(account, type);
+
+            if (transactions == null) return NotFound("Account does not have an extract with this type!");
 
             return Ok(transactions);
         }
 
-        [HttpPost("{accNumber}")]
-        public async Task<ActionResult<Transactions>> Post(string accNumber, TransactionsDTO dto)
+        [HttpGet("account/{accNumber}")]
+        public async Task<ActionResult<List<Transactions>>> GetExtract(string accNumber)
+        {
+            List<Transactions> transactions = null;
+            transactions = await _transactionService.GetExtract(accNumber);
+            if (transactions == null) return NotFound();
+
+            return Ok(transactions);
+        }
+
+        [HttpPost("account/{accNumber}")]
+        public async Task<ActionResult<Transactions>> CreateTransaction(string accNumber, TransactionsDTO dto)
         {
             var account = await _transactionService.GetAccount(accNumber);
             if (account == null) return NotFound("Account not found!");
@@ -80,7 +95,6 @@ namespace AccountAPI.Controllers
                 if (account.Agency.Restriction == true) return "Account Agency is restricted!";
                 if (account.Restriction == true) return "Account Origin is restricted!";
                 if (account.Customers[0].Restriction == true) return "Account Origin Customer is restricted!";
-
             }
             else
             {

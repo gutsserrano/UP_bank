@@ -16,7 +16,13 @@ namespace AccountAPI.Services
             _accountCollection = database.GetCollection<Account>(settings.AccountCollectionName);
         }
 
-        public async Task<Transactions> Get(Account account, int id)
+        public async Task<Account> GetAccount(string accNumber)
+        {
+            var account = await _accountCollection.Find(x => x.Number == accNumber).FirstOrDefaultAsync();
+            return account;
+        }
+
+        public async Task<Transactions> GetExtractId(Account account, int id)
         {
             List<Transactions>? transactions = null;
             Transactions? transaction = null;
@@ -29,13 +35,21 @@ namespace AccountAPI.Services
             return transaction;
         }
 
-        public async Task<Account> GetAccount(string accNumber)
+        public async Task<Transactions> GetExtractType(Account account, int type)
         {
-            var account = await _accountCollection.Find(x => x.Number == accNumber).FirstOrDefaultAsync();
-            return account;
+            List<Transactions>? transactions = null;
+            Transactions? transaction = null;
+
+            transactions = account.Extract;
+
+            if (transactions != null)
+                transaction = transactions.Find(x => (int)x.Type == type);
+
+            return transaction;
         }
 
-        public async Task<List<Transactions>> GetAll(string number)
+
+        public async Task<List<Transactions>> GetExtract(string number)
         {
             List<Transactions>? transactions = null;
             var account = await _accountCollection.Find(x => x.Number == number).FirstOrDefaultAsync();
@@ -69,15 +83,15 @@ namespace AccountAPI.Services
             }
 
             // Set transaction values
-            AccountDTOTransaction accountDTOTransaction = null;
+            AccountTransactionDTO accountDTOTransaction = null;
             var accountDestiny = await GetAccount(dto.AccountDestinyNumber);
             if (accountDestiny != null)
-                accountDTOTransaction = new AccountDTOTransaction(accountDestiny);
+                accountDTOTransaction = new AccountTransactionDTO(accountDestiny, ETransactionType.Sent);
 
             Transactions transaction = new Transactions(dto);
             transaction.Id = Id + 1;
             transaction.Date = DateTime.Now;
-            transaction.Destiny = accountDTOTransaction;
+            transaction.Account = accountDTOTransaction;
 
             // Add transaction to list
             transactions.Add(transaction);
@@ -108,7 +122,7 @@ namespace AccountAPI.Services
                 Transactions transaction2 = new Transactions(dto);
                 transaction2.Id = Id + 1;
                 transaction2.Date = DateTime.Now;
-                transaction2.Destiny = new AccountDTOTransaction(accountOrigin);
+                transaction2.Account = new AccountTransactionDTO(accountOrigin, ETransactionType.Received);
                 // Add transaction to list
                 transactions.Add(transaction2);
 
