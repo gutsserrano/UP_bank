@@ -24,10 +24,10 @@ namespace Models
         public string Email { get; set; }
         [NotMapped]
         public Address Address { get; set; }
-        [JsonIgnore]
+        //[JsonIgnore]
         [StringLength(9)]
         public string AddressZipCode { get; set; }
-        [JsonIgnore]
+        //[JsonIgnore]
         public string AddressNumber { get; set; }
     }
 }
