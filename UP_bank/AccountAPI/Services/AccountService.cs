@@ -124,6 +124,15 @@ namespace AccountAPI.Services
             return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
         }
 
+        public async Task<Account> UpdateAccountProfile(EProfile profile, Account account)
+        {
+            var filter = Builders<Account>.Filter.Eq("Number", account.Number);
+            var update = Builders<Account>.Update.Set("Profile", profile);
+            await _accountCollection.UpdateOneAsync(filter, update);
+
+            return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
+        }
+
         public async Task<Account> UpdateAccountBalance(Transactions transaction, Account account)
         {
             int Type = (int)transaction.Type;
