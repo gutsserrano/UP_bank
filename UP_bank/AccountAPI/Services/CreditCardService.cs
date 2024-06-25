@@ -3,12 +3,14 @@ using Models;
 using MongoDB.Driver;
 using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 using System.Transactions;
+using Newtonsoft.Json;
 
 namespace AccountAPI.Services
 {
     public class CreditCardService
     {
         private readonly IMongoCollection<Account> _accountCollection;
+        private readonly HttpClient _httpClient = new HttpClient();
 
         public CreditCardService(IMongoDataSettings settings)
         {
@@ -33,9 +35,31 @@ namespace AccountAPI.Services
             var accNumber = account.Number;
             CreditCard creditCard;
             bool ok = false;
+            var cpfs = account.Customers.Select(c => c.Cpf).ToList();
+            List <Customer> customers = new List<Customer>();
+
+            for (int i = 0; i < cpfs.Count; i++)
+            {
+                try
+                {
+                    var response = _httpClient.GetAsync($"https://localhost:7147/api/Customers/{cpfs[i]}").Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
+                        customers.Add(customer);
+                    }
+                        
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+            }
+
             do
             {
-                creditCard = new CreditCard(account.Customers.FirstOrDefault().Name, account.Profile.ToString());
+                creditCard = new CreditCard(customers.FirstOrDefault().Name, account.Profile.ToString());
                 var x = await _accountCollection.Find(x => x.CreditCard.Number == creditCard.Number).FirstOrDefaultAsync();
                 if (x == null)
                     ok = true;

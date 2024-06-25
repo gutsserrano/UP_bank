@@ -32,8 +32,15 @@ namespace AccountAPI.Controllers
         public async Task<ActionResult<Account>> Post()
         {
             var account = CriaContaTemp(); // temporario
-            await _accountService.Post(CriaContaTemp());
-            await _accountService.Post(account);
+            try
+            {
+                await _accountService.Post(CriaContaTemp());
+                await _accountService.Post(account);
+            }
+            catch (Exception)
+            {
+                return BadRequest("Error creating account");
+            }
             return Ok(account);
         }
 
