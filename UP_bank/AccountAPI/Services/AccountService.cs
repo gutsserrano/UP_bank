@@ -1,4 +1,5 @@
 ﻿using AccountAPI.Settings;
+using Microsoft.AspNetCore.JsonPatch.Internal;
 using Models;
 using Models.DTO;
 using MongoDB.Driver;
@@ -173,5 +174,20 @@ namespace AccountAPI.Services
             _accountHistoryCollection.DeleteOne(x => x.Number == account.Number);
             return account;
         }
+
+        public  List<Account> buildList(List<Account> acc, List <Account> acc2)
+        {
+            var result = new List<Account>();
+            foreach (var item in acc)
+            {
+                result.Add(item);
+            }
+            foreach (var item in acc2)
+            {
+                result.Add(item);
+            }
+            return result;
+        }
+        
     }
 }

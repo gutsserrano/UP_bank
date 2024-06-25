@@ -80,7 +80,8 @@ namespace AccountAPI.Controllers
             var account = await _transactionService.GetAccount(accNumber);
             var accountDestiny = await _transactionService.GetAccount(dto.AccountDestinyNumber);
 
-            if (Type != 3 && accountDestiny != null) return "Operation not allowed, you can only inform the Destiny Account in a Transfer type transaction!";
+            if (Type != 3 && (accountDestiny != null || dto.AccountDestinyNumber != "")) return "Operation not allowed, you can only inform the Destiny Account in a Transfer type transaction!";
+           
 
             if (Type == 0 || Type == 3 || Type == 4) // Subtract balance
             {
