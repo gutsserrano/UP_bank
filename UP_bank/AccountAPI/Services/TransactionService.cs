@@ -64,7 +64,7 @@ namespace AccountAPI.Services
         {
             int Id = 0;
             int Type = (int)dto.Type;
-            List<Transactions> transactions = new List<Transactions>();
+            List<Transactions> transactionsList = new List<Transactions>();
 
             #region Account Origin
             // Load all existing extracts
@@ -72,7 +72,7 @@ namespace AccountAPI.Services
             {
                 foreach (var item in accountOrigin.Extract)
                 {
-                    transactions.Add(item);
+                    transactionsList.Add(item);
                     Id = item.Id;
                 }
             }
@@ -88,16 +88,16 @@ namespace AccountAPI.Services
             if (accountDestiny != null)
                 accountDTOTransaction = new AccountTransactionDTO(accountDestiny, ETransactionType.Sent);
 
-            Transactions transaction = new Transactions(dto);
-            transaction.Id = Id + 1;
-            transaction.Date = DateTime.Now;
-            transaction.Account = accountDTOTransaction;
+            Transactions transactionOrigin = new Transactions(dto);
+            transactionOrigin.Id = Id + 1;
+            transactionOrigin.Date = DateTime.Now;
+            transactionOrigin.Account = accountDTOTransaction;
 
-            // Add transaction to list
-            transactions.Add(transaction);
+            // Add transactionOrigin to list
+            transactionsList.Add(transactionOrigin);
 
             var filter = Builders<Account>.Filter.Eq("Number", accountOrigin.Number);
-            var update = Builders<Account>.Update.Set("Extract", transactions);
+            var update = Builders<Account>.Update.Set("Extract", transactionsList);
             await _accountCollection.UpdateOneAsync(filter, update);
             #endregion
 
@@ -106,35 +106,65 @@ namespace AccountAPI.Services
             // Load all existing extracts
             if (accountDestiny != null)
             {
-                transactions = new List<Transactions>();
+                transactionsList = new List<Transactions>();
                 Id = 0;
                 if (accountDestiny.Extract != null)
                 {
                     foreach (var item in accountDestiny.Extract)
                     {
-                        transactions.Add(item);
+                        transactionsList.Add(item);
                         Id = item.Id;
                     }
                 }
 
                 // Set transaction values
                 dto.Price = dto.Price * -1;
-                Transactions transaction2 = new Transactions(dto);
-                transaction2.Id = Id + 1;
-                transaction2.Date = DateTime.Now;
-                transaction2.Account = new AccountTransactionDTO(accountOrigin, ETransactionType.Received);
+                Transactions transactionDestiny = new Transactions(dto);
+                transactionDestiny.Id = Id + 1;
+                transactionDestiny.Date = DateTime.Now;
+                transactionDestiny.Account = new AccountTransactionDTO(accountOrigin, ETransactionType.Received);
                 // Add transaction to list
-                transactions.Add(transaction2);
+                transactionsList.Add(transactionDestiny);
 
                 var filterDestiny = Builders<Account>.Filter.Eq("Number", accountDestiny.Number);
-                var updateDestiny = Builders<Account>.Update.Set("Extract", transactions);
+                var updateDestiny = Builders<Account>.Update.Set("Extract", transactionsList);
                 await _accountCollection.UpdateOneAsync(filterDestiny, updateDestiny);
             }
             #endregion
 
 
             // Return Origin Transaction
-            return transaction;
+            return transactionOrigin;
+        }
+
+        public async Task<string> ValidateTransaction(Account account, TransactionsDTO dto)
+        {
+            int Type = (int)dto.Type;
+            var accountDestiny = await GetAccount(dto.AccountDestinyNumber);
+
+            if (Type != 3 && (accountDestiny != null || dto.AccountDestinyNumber != String.Empty)) return "Operation not allowed, you can only inform the Destiny Account in a Transfer type transaction!";
+
+            if (Type == 0 || Type == 3 || Type == 4) // Subtract balance
+            {
+                if (accountDestiny == null && Type == 3) return "Destiny account not located!";
+                if (dto.Price > (account.Balance + account.Overdraft)) return $"Your Account Balance is $ {account.Balance} and your Overdraft is $ {account.Overdraft}, with Total of $ {account.Balance + account.Overdraft} available. This value is lower than Transaction value of $ {dto.Price}!";
+            }
+
+            if (accountDestiny == null)
+            {
+                if (account.Agency.Restriction == true) return "Account Agency is restricted!";
+                if (account.Restriction == true) return "Account Origin is restricted!";
+                if (account.Customers[0].Restriction == true) return "Account Origin Customer is restricted!";
+            }
+            else
+            {
+                if (accountDestiny.Agency.Restriction == true) return "Account Destiny Agency is restricted!";
+                if (accountDestiny.Restriction == true) return "Account Destiny is restricted!";
+                if (accountDestiny.Customers[0].Restriction == true) return "Account Destiny Customer is restricted!";
+                if (account.Number == accountDestiny.Number) return "You cannot transfer to your own account! Use Deposit instead.";
+            }
+
+            return "Ok";
         }
     }
 }
