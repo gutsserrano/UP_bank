@@ -206,28 +206,33 @@ namespace UPBank.AgencyAPI.Controllers
         }
 
         // DELETE: api/Agencies/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAgency(string id)
+        [HttpDelete("{number}")]
+        public async Task<IActionResult> DeleteAgency(string number)
         {
             if (_context.Agency == null)
             {
                 return NotFound();
             }
-            var agency = await _context.Agency.FindAsync(id);
+            var agency = await _context.Agency.FindAsync(number);
             if (agency == null)
             {
                 return NotFound();
             }
+            
+            _context.DeletedAgency.Add(new DeletedAgency(agency));
+
+            _context.AgencyEmployee.RemoveRange(agency.EmployeesCpf);
 
             _context.Agency.Remove(agency);
+
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool AgencyExists(string id)
+        private bool AgencyExists(string number)
         {
-            return (_context.Agency?.Any(e => e.Number == id)).GetValueOrDefault();
+            return (_context.Agency?.Any(e => e.Number == number)).GetValueOrDefault();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Models
 {
-    public class Agency
+    public class DeletedAgency
     {
         [Key]
         public string Number { get; set; }
@@ -19,7 +19,7 @@ namespace Models
         [NotMapped]
         public List<Employee> Employees { get; set; } = new List<Employee>();
         [JsonIgnore]
-        public List<AgencyEmployee> EmployeesCpf { get; set; } = new List<AgencyEmployee>();
+        public List<DeletedAgencyEmployee> EmployeesCpf { get; set; } = new List<DeletedAgencyEmployee>();
         [NotMapped]
         public Address Address { get; set; }
         [JsonIgnore]
@@ -28,27 +28,28 @@ namespace Models
         [JsonIgnore]
         public string AddressNumber { get; set; }
 
-        public Agency()
+        public DeletedAgency()
         {
             
         }
 
-        public Agency(DeletedAgency deletedAgency)
+        public DeletedAgency(Agency agency)
         {
-            List<AgencyEmployee> employees = new List<AgencyEmployee>();
-            foreach(var item in deletedAgency.EmployeesCpf)
+            List<DeletedAgencyEmployee> deleteds = new List<DeletedAgencyEmployee>();
+
+            foreach(var item in agency.EmployeesCpf)
             {
-                employees.Add(new AgencyEmployee(item));
+                deleteds.Add(new DeletedAgencyEmployee(item));
             }
 
-            Number = deletedAgency.Number;
-            Cnpj = deletedAgency.Cnpj;
-            Restriction = deletedAgency.Restriction;
-            Employees = deletedAgency.Employees;
-            EmployeesCpf = employees;
-            Address = deletedAgency.Address;
-            AddressZipCode = deletedAgency.AddressZipCode;
-            AddressNumber = deletedAgency.AddressNumber;
+            Number = agency.Number;
+            Cnpj = agency.Cnpj;
+            Restriction = agency.Restriction;
+            Employees = agency.Employees;
+            EmployeesCpf = deleteds;
+            Address = agency.Address;
+            AddressZipCode = agency.AddressZipCode;
+            AddressNumber = agency.AddressNumber;
         }
     }
 }

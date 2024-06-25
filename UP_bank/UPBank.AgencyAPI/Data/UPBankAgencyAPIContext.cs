@@ -15,5 +15,21 @@ namespace UPBank.AgencyAPI.Data
         }
 
         public DbSet<Models.Agency> Agency { get; set; } = default!;
+        public DbSet<Models.AgencyEmployee> AgencyEmployee { get; set; } = default!;
+        public DbSet<Models.DeletedAgency> DeletedAgency { get; set; } = default!;
+        public DbSet<Models.DeletedAgencyEmployee> DeletedAgencyEmployee { get; set; } = default!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Agency>().ToTable("Agency");
+
+            modelBuilder.Entity<AgencyEmployee>().ToTable("AgencyEmployee");
+
+            modelBuilder.Entity<DeletedAgency>().ToTable("DeletedAgency");
+
+            modelBuilder.Entity<DeletedAgencyEmployee>().ToTable("DeletedAgencyEmployee");
+        }
     }
 }

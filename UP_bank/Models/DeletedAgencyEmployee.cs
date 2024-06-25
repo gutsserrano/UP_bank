@@ -7,20 +7,20 @@ using System.Threading.Tasks;
 
 namespace Models
 {
-    public class AgencyEmployee
+    public class DeletedAgencyEmployee
     {
         [Key]
         [StringLength(14)]
         public string Cpf { get; set; }
 
-        public AgencyEmployee()
+        public DeletedAgencyEmployee()
         {
             
         }
 
-        public AgencyEmployee(DeletedAgencyEmployee deletedAgencyEmployee)
+        public DeletedAgencyEmployee(AgencyEmployee agencyEmployee)
         {
-            Cpf = deletedAgencyEmployee.Cpf;
+            Cpf = agencyEmployee.Cpf;
         }
     }
 }
