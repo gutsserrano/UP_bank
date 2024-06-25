@@ -63,23 +63,32 @@ namespace AccountAPI.Controllers
         [HttpPost]
         //https://localhost:7244/api/accounts/ test POST
         // aqui deve receber Account json
-        public async Task<ActionResult<Account>> Post()
+        public async Task<ActionResult<Account>> Post(AccountDTO accountDTO)
         {
-            var account = await CreateNewAccount(); // temporario
             try
             {
-                await _accountService.Post(await CreateNewAccount()); // temporario
-                await _accountService.Post(account);
+                if ((int)accountDTO.Profile < 0) return BadRequest("Profile inexistent.");
+
+                var agency = await _accountService.GetAgency(accountDTO);       // Get Agency DTO Api
+                if (agency == null) return NotFound("Agency not found!");
+
+                var customers = await _accountService.GetCustomer(accountDTO);  // Get List Customers DTO Api
+                if (customers == null) return NotFound("Customers not found!");
+
+                var account = await _accountService.CreateNewAccount(accountDTO, agency, customers);    // Create Account
+                if (account == null) return BadRequest("Could not create an account at this time!");
+
+                await _accountService.Post(account);    // Post Account
+
+                var creditCard = await _creditCardService.Post(account); // Post Credit Card to Account
+                if (creditCard == null) return BadRequest("Account was created but without a credit card.");
+
+                return Ok(account);
             }
             catch (Exception)
             {
                 return BadRequest("Error creating account!");
             }
-
-            var creditCard = await _creditCardService.Post(account); // create account credit card
-            if (creditCard == null) return BadRequest("Account was created but without a credit card.");
-
-            return Ok(account);
         }
 
         [HttpPatch("account/{accNumber}")]
@@ -207,75 +216,11 @@ namespace AccountAPI.Controllers
         [HttpGet("getAllAccounts")]
         public async Task<ActionResult<List<Account>>> GetAllAccounts()
         {
-            var accounts = await _accountService.GetAll(0, false);
-            var acc_deleted = await _accountService.GetAll(0, true);
-            var lst = _accountService.BuildList(accounts, acc_deleted);
+            var lst = _accountService.BuildList();
 
             if (lst == null) return NotFound("No accounts were found!");
 
             return Ok(lst);
-        }
-
-
-        public async Task<Account> CreateNewAccount()
-        {
-            List<AgencyCustomerDTO> customerList = new List<AgencyCustomerDTO>();
-
-            var accounts = await _accountService.GetAll(0, false);
-            var acc_deleted = await _accountService.GetAll(0, true);
-            var lst = _accountService.BuildList(accounts, acc_deleted);
-
-            #region Validate if account number already exists
-            string accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
-            List<string> numbers = new List<string>();
-
-            foreach (var item in accounts)
-            {
-                numbers.Add(item.Number);
-            }
-
-            do
-            {
-                accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
-            } while (numbers.Contains(accountNumber));
-            #endregion
-
-
-            customerList.Add(new AgencyCustomerDTO
-            {
-                Cpf = "555.666.888-99",
-                DtBirth = new DateTime(1990, 10, 5),
-                Restriction = false
-            });
-
-            customerList.Add(new AgencyCustomerDTO
-            {
-                Cpf = "444.777.222-00",
-                DtBirth = new DateTime(2014, 2, 10),
-                Restriction = false
-            });
-
-            AccountAgencyDTO agency = new AccountAgencyDTO
-            {
-                Number = "0064",
-                Restriction = false,
-            };
-
-            // Cria Account
-            Account account = new Account
-            {
-                Agency = agency,
-                Number = accountNumber,
-                Date = DateTime.Today,
-                Profile = EProfile.Normal,
-                Customers = customerList,
-                Overdraft = 1000,
-                Balance = 0,
-                Restriction = true, // restrito true até ser aceito pelo gerente
-                CreditCard = null, // nulo até gerar o cartao
-                Extract = null // nulo pois nao tem transacoes ainda
-            };
-            return account;
         }
     }
 }

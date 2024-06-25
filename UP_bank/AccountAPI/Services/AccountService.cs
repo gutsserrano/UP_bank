@@ -237,18 +237,111 @@ namespace AccountAPI.Services
             }
         }
 
-        public List<Account> BuildList(List<Account> acc, List<Account> acc2)
+        public async Task<List<Account>> BuildList()
         {
+            var accounts = await GetAll(0, false);
+            var accountHistory = await GetAll(0, true);
             var result = new List<Account>();
-            foreach (var item in acc)
+            foreach (var item in accounts)
             {
                 result.Add(item);
             }
-            foreach (var item in acc2)
+            foreach (var item in accountHistory)
             {
                 result.Add(item);
             }
             return result;
+        }
+
+        public async Task<AccountAgencyDTO> GetAgency(AccountDTO accountDTO)
+        {
+            // GET VIA API AGENCY DATA
+            //accountDTO.Agency;
+            return null;
+        }
+        public async Task<List<AgencyCustomerDTO>> GetCustomer(AccountDTO accountDTO)
+        {
+            // GET VIA API CUSTOMERS DATA
+            //accountDTO.OwnerCpf;
+            //accountDTO.DependentCpf;
+            return null;
+        }
+
+        public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<AgencyCustomerDTO> customers)
+        {
+            var allAccounts = await BuildList();
+            var currentNumbers = allAccounts.Select(x => x.Number).ToList();
+
+            #region Validate if account number already exists
+            string accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
+
+            do
+            {
+                accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
+            } while (currentNumbers.Contains(accountNumber));
+            #endregion
+
+            /*
+
+            // GET Customers
+            //accountDTO.OwnerCpf;
+            List<AgencyCustomerDTO> customerList = new List<AgencyCustomerDTO>();
+            customerList.Add(new AgencyCustomerDTO
+            {
+                Cpf = "555.666.888-99",
+                DtBirth = new DateTime(1990, 10, 5),
+                Restriction = false
+            });
+            //accountDTO.DependentCpf;
+            customerList.Add(new AgencyCustomerDTO
+            {
+                Cpf = "444.777.222-00",
+                DtBirth = new DateTime(2014, 2, 10),
+                Restriction = false
+            });
+
+            // GET Agency
+            //accountDTO.Agency;
+            AccountAgencyDTO agency = new AccountAgencyDTO
+            {
+                Number = "0064",
+                Restriction = false,
+            };
+
+            */
+
+
+            // GET Overdraft
+            double overdraft = 0;
+            switch (accountDTO.Profile)
+            {
+                case EProfile.University:
+                    overdraft = 500;
+                    break;
+                case EProfile.Normal:
+                    overdraft = 1000;
+                    break;
+                case EProfile.Vip:
+                    overdraft = 3000;
+                    break;
+            }
+
+            // Cria Account
+            Account account = new Account
+            {
+                Agency = agency,
+                Number = accountNumber,
+                Date = DateTime.Today,  // Default
+                //Profile = EProfile.Normal,
+                Profile = accountDTO.Profile,
+                Customers = customers,
+                Overdraft = overdraft,
+                Balance = 0,            // Default 
+                Restriction = true,     // Restricted until manager approves
+                CreditCard = null,      // Default
+                Extract = null          // Default
+            };
+            return account;
         }
 
     }

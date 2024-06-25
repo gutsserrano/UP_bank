@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Models.DTO
         public string Agency { get; set; }
         public string OwnerCpf { get; set; }
         public string? DependentCpf { get; set; }
+        [JsonRequired]
         public EProfile Profile { get; set; }
     }
 }
