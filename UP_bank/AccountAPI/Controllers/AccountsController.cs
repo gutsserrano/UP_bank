@@ -95,15 +95,14 @@ namespace AccountAPI.Controllers
             return Ok("Customer restriction updated.");
         }
 
-        [HttpDelete("account/{accNumber}")]
+        [HttpDelete("close-account/account/{accNumber}")]
         public async Task<ActionResult> Delete(string accNumber)
         {
             Account account = await _accountService.Get(accNumber, false);
-
             if (account == null) return NotFound("Account not found!");
 
             await _accountService.Delete(account);
-            return Ok("Account successfully deleted!");
+            return Ok("Account successfully closed!");
         }
 
         [HttpPost("restore/{accNumber}")]
@@ -119,7 +118,7 @@ namespace AccountAPI.Controllers
         [HttpGet("checkBalance/account/{accNumber}")]
         public async Task<ActionResult<Account>> CheckBalance(string accNumber)
         {
-            Account account = await _accountService.Get(accNumber, 0);
+            Account account = await _accountService.Get(accNumber, false);
 
             if (account == null) return NotFound("Account not found!");
 
