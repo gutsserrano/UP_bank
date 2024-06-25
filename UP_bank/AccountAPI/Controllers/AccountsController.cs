@@ -116,6 +116,18 @@ namespace AccountAPI.Controllers
             await _accountService.Restore(account);
             return Ok(account);
         }
+        [HttpGet("checkBalance/account/{accNumber}")]
+        public async Task<ActionResult<Account>> CheckBalance(string accNumber)
+        {
+            Account account = await _accountService.Get(accNumber, 0);
+
+            if (account == null) return NotFound("Account not found!");
+
+            AccountBalanceDTO accountBalanceDTO = new AccountBalanceDTO(account);
+            if(accountBalanceDTO == null) return BadRequest("Error!");
+
+            return Ok(accountBalanceDTO);
+        }
 
 
         public Account CriaContaTemp()
