@@ -148,7 +148,7 @@ namespace Up_bank.EmployeeAPI.Controllers
         }
 
         // DELETE: api/Employees/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{cpf}")]
         public async Task<IActionResult> DeleteEmployee(string cpf)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
@@ -159,16 +159,23 @@ namespace Up_bank.EmployeeAPI.Controllers
             {
                 return NotFound();
             }
-            var employee = await _context.Employee.FindAsync(cpf);
+
+            var employee = await _context.Employee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
+
             if (employee == null)
             {
                 return NotFound();
             }
 
+            var deletedEmployee = new DeletedEmployee(employee);
+
+            _context.DeletedEmployee.Add(deletedEmployee);
+
             _context.Employee.Remove(employee);
+
             await _context.SaveChangesAsync();
 
-            return Ok(employee);
+            return Ok(deletedEmployee);
         }
 
         private bool EmployeeExists(string cpf)

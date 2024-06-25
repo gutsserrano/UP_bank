@@ -91,32 +91,33 @@ namespace Services
             catch { throw new Exception("Occurred an error while updating employee"); }
         }
 
-        public async Task<Employee> DeleteEmployee(Employee employee)
-        {
+        //public DeletedEmployee DeleteEmployee(Employee employee)
+        //{
 
-            DeletedEmployee deletedEmployee;
-            try
-            {
-                deletedEmployee = new()
-                {
-                    Cpf = employee.Cpf,
-                    Name = employee.Name,
-                    DtBirth = employee.DtBirth,
-                    Sex = employee.Sex,
-                    Income = employee.Income,
-                    Email = employee.Email,
-                    Phone = employee.Phone,
-                    AddressZipCode = employee.AddressZipCode,
-                    AddressNumber = employee.AddressNumber,
-                    Manager = employee.Manager,
-                    Register = employee.Register,
-                };
+        //    DeletedEmployee deletedEmployee;
+        //    try
+        //    {
+        //        deletedEmployee = new()
+        //        {
+        //            Cpf = employee.Cpf,
+        //            Name = employee.Name,
+        //            DtBirth = employee.DtBirth,
+        //            Sex = employee.Sex,
+        //            Income = employee.Income,
+        //            Email = employee.Email,
+        //            Phone = employee.Phone,
+        //            Address = employee.Address,
+        //            AddressZipCode = employee.AddressZipCode,
+        //            AddressNumber = employee.AddressNumber,
+        //            Manager = employee.Manager,
+        //            Register = employee.Register,
+        //        };
 
-                return deletedEmployee;
+        //        return deletedEmployee;
 
-            }
-            catch { throw new Exception("Occurred an error while deleting employee"); }
-        }
+        //    }
+        //    catch { throw new Exception("Occurred an error while deleting employee"); }
+        //}
 
         //
 
