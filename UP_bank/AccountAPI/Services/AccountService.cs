@@ -154,9 +154,17 @@ namespace AccountAPI.Services
 
         public async Task<Account> Delete(Account account)
         {
-            _accountHistoryCollection.InsertOne(account);
-            _accountCollection.DeleteOne(x => x.Number == account.Number);
-            return account;
+            try
+            {
+                _accountHistoryCollection.InsertOne(account);
+                _accountCollection.DeleteOne(x => x.Number == account.Number);
+                return account;
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException("Error closing account: " + e.Message);
+            }
+            
         }
 
         public async Task<Account> Restore(Account account)
