@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.JsonPatch.Internal;
 using Models;
 using Models.DTO;
 using MongoDB.Driver;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Transactions;
 using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
@@ -12,6 +14,7 @@ namespace AccountAPI.Services
     {
         private readonly IMongoCollection<Account> _accountCollection;
         private readonly IMongoCollection<Account> _accountHistoryCollection;
+        private readonly HttpClient _httpClient = new HttpClient();
 
         public AccountService(IMongoDataSettings settings)
         {
@@ -255,16 +258,85 @@ namespace AccountAPI.Services
 
         public async Task<AccountAgencyDTO> GetAgency(AccountDTO accountDTO)
         {
-            // GET VIA API AGENCY DATA
-            //accountDTO.Agency;
-            return null;
+            //GET API AGENCY
+            AccountAgencyDTO agencyDTO = null;
+            try
+            {
+                var response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.OwnerCpf}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var agency = JsonConvert.DeserializeObject<Agency>(response.Content.ReadAsStringAsync().Result);
+                    agencyDTO = new AccountAgencyDTO
+                    {
+                        Number = agency.Number,
+                        Restriction = agency.Restriction
+                    };
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return agencyDTO;
         }
+
         public async Task<List<AgencyCustomerDTO>> GetCustomer(AccountDTO accountDTO)
         {
-            // GET VIA API CUSTOMERS DATA
-            //accountDTO.OwnerCpf;
-            //accountDTO.DependentCpf;
-            return null;
+            // GET API CUSTOMERS
+            List<AgencyCustomerDTO>? listCustomers = new List<AgencyCustomerDTO>();
+            Customer? customer = null;
+            accountDTO.OwnerCpf = accountDTO.OwnerCpf.Replace(".", "").Replace("-", "").Trim();
+            accountDTO.DependentCpf = accountDTO.DependentCpf.Replace(".", "").Replace("-", "").Trim();
+            try
+            {
+                // Get customer owner
+                if (accountDTO.OwnerCpf != String.Empty || accountDTO.OwnerCpf != null)
+                {
+                    var response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.OwnerCpf}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
+                        if (customer != null)
+                        {
+                            listCustomers.Add(new AgencyCustomerDTO
+                            {
+                                Cpf = customer.Cpf,
+                                DtBirth = customer.DtBirth,
+                                Restriction = customer.Restriction
+                            });
+                        }
+                    }
+                    // Ger customer dependent
+                    if (accountDTO.DependentCpf != String.Empty || accountDTO.DependentCpf != null)
+                    {
+                        customer = null;
+                        response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.DependentCpf}");
+                        if (response.IsSuccessStatusCode)
+                        {
+                            customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
+                            if (customer != null)
+                            {
+                                listCustomers.Add(new AgencyCustomerDTO
+                                {
+                                    Cpf = customer.Cpf,
+                                    DtBirth = customer.DtBirth,
+                                    Restriction = customer.Restriction
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            if (listCustomers.Count == 0)
+                listCustomers = null;
+
+            return listCustomers;
         }
 
         public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<AgencyCustomerDTO> customers)
