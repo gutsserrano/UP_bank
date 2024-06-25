@@ -21,7 +21,27 @@ namespace AccountAPI.Controllers
         {
             var account = await _accountService.Get(accNumber, deleted);
 
-            if (account == null) return NotFound();
+            if (account == null) return NotFound("Account not found!");
+
+            return Ok(account);
+        }
+
+        [HttpGet("status/{deleted}/param/{param}")]
+        public async Task<ActionResult<Account>> GetAll(int param, int deleted)
+        {
+            var account = await _accountService.GetAll(deleted, param);
+
+            if (account == null) return NotFound("No accounts were located!");
+
+            return Ok(account);
+        }
+
+        [HttpGet("status/{deleted}/profile/{profile}")]
+        public async Task<ActionResult<Account>> GetAllProfile(EProfile profile, int deleted)
+        {
+            var account = await _accountService.GetAllProfile(profile, deleted);
+
+            if (account == null) return NotFound("No accounts were located!");
 
             return Ok(account);
         }
@@ -34,12 +54,12 @@ namespace AccountAPI.Controllers
             var account = CriaContaTemp(); // temporario
             try
             {
-                await _accountService.Post(CriaContaTemp());
+                await _accountService.Post(CriaContaTemp()); // temporario
                 await _accountService.Post(account);
             }
             catch (Exception)
             {
-                return BadRequest("Error creating account");
+                return BadRequest("Error creating account!");
             }
             return Ok(account);
         }
@@ -49,6 +69,8 @@ namespace AccountAPI.Controllers
         {
             Account account = await _accountService.Get(accNumber, 0);
 
+            //dto.ManagerCpf = busca API funcionaro para ver se o CPF é manager
+            //if true continua..
             if (account == null) return NotFound();
 
             if (dto.Restriction == account.Restriction) return BadRequest($"Account is already in restriction status {account.Restriction}");
@@ -78,7 +100,7 @@ namespace AccountAPI.Controllers
         {
             Account account = await _accountService.Get(accNumber, 0);
 
-            if (account == null) return NotFound();
+            if (account == null) return NotFound("Account not found!");
 
             await _accountService.Delete(account);
             return Ok("Account successfully deleted!");
@@ -89,7 +111,7 @@ namespace AccountAPI.Controllers
         {
             Account account = await _accountService.Get(accNumber, 1);
 
-            if (account == null) return NotFound();
+            if (account == null) return NotFound("Account not found!");
 
             await _accountService.Restore(account);
             return Ok(account);
