@@ -20,41 +20,48 @@ namespace AccountAPI.Services
             _accountHistoryCollection = database.GetCollection<Account>(settings.AccountHistoryCollectionName);
         }
 
-        public async Task<Account> Get(string number, int deleted)
+        public async Task<Account> Get(string number, bool deleted)
         {
             Account account = null;
-            account = (deleted == 0) ? await _accountCollection.Find(x => x.Number == number).FirstOrDefaultAsync() : await _accountHistoryCollection.Find(x => x.Number == number).FirstOrDefaultAsync();
+            account = (!deleted) ? await _accountCollection.Find(x => x.Number == number).FirstOrDefaultAsync() : await _accountHistoryCollection.Find(x => x.Number == number).FirstOrDefaultAsync();
             return account;
         }
 
-        public async Task<List<Account>> GetAllProfile(EProfile profile, int deleted)
+        public async Task<List<Account>> GetAllProfile(EProfile profile, bool deleted)
         {
             List<Account> accounts = null;
-            accounts = (deleted == 0) ? await _accountCollection.Find(x => x.Profile == profile).ToListAsync() : await _accountHistoryCollection.Find(x => x.Profile == profile).ToListAsync();
+            accounts = (!deleted) ? await _accountCollection.Find(x => x.Profile == profile).ToListAsync() : await _accountHistoryCollection.Find(x => x.Profile == profile).ToListAsync();
             return accounts;
         }
 
-        public async Task<List<Account>> GetAll(int param, int deleted)
+        public async Task<List<Account>> GetAll(int param, bool deleted)
         {
             List<Account> accounts = null;
 
             if (param == 0) // GetAll
-                accounts = (deleted == 0) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
+                accounts = (!deleted) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
 
             if (param == 1) // GetAll Restricted
-                accounts = (deleted == 0) ? await _accountCollection.Find(x => x.Restriction == true).ToListAsync() : await _accountHistoryCollection.Find(x => x.Restriction == true).ToListAsync();
+                accounts = (!deleted) ? await _accountCollection.Find(x => x.Restriction == true).ToListAsync() : await _accountHistoryCollection.Find(x => x.Restriction == true).ToListAsync();
 
             if (param == 2) // GetAll Active Loan
             {
                 List<Account> accountsLoan = new List<Account>();
-                accounts = (deleted == 0) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
+                accounts = (!deleted) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
                 foreach (var acc in accounts)
                 {
-                    if ((!accountsLoan.Exists(x => x.Number == acc.Number)) && (acc.Extract.Find(x => x.Type == EType.Loan) != null))
+                    if(acc.Extract != null)
                     {
-                        accountsLoan.Add(acc);
+                        if ((!accountsLoan.Exists(x => x.Number == acc.Number)) && (acc.Extract.Find(x => x.Type == EType.Loan) != null))
+                        {
+                            accountsLoan.Add(acc);
+                        }
                     }
                 }
+
+                if(accountsLoan.Count == 0)
+                    accountsLoan = null;
+
                 accounts = accountsLoan;
             }
 
@@ -123,7 +130,7 @@ namespace AccountAPI.Services
             Account accountDestiny = null;
 
             if (transaction.Account != null)
-                accountDestiny = await Get(transaction.Account.Number, 0);
+                accountDestiny = await Get(transaction.Account.Number, false);
 
             // Update Account Origin Balance
             balance = (account.Balance + transaction.Price);

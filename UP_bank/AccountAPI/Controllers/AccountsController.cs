@@ -16,8 +16,8 @@ namespace AccountAPI.Controllers
             _accountService = service;
         }
 
-        [HttpGet("account/{accNumber}/status/{deleted}")]
-        public async Task<ActionResult<Account>> Get(string accNumber, int deleted)
+        [HttpGet("account/{accNumber}")]
+        public async Task<ActionResult<Account>> Get(string accNumber, bool deleted = false)
         {
             var account = await _accountService.Get(accNumber, deleted);
 
@@ -26,18 +26,18 @@ namespace AccountAPI.Controllers
             return Ok(account);
         }
 
-        [HttpGet("status/{deleted}/param/{param}")]
-        public async Task<ActionResult<Account>> GetAll(int param, int deleted)
+        [HttpGet("type/{type}")]
+        public async Task<ActionResult<Account>> GetAll(int type, bool deleted = false)
         {
-            var account = await _accountService.GetAll(deleted, param);
+            var account = await _accountService.GetAll(type, deleted);
 
             if (account == null) return NotFound("No accounts were located!");
 
             return Ok(account);
         }
 
-        [HttpGet("status/{deleted}/profile/{profile}")]
-        public async Task<ActionResult<Account>> GetAllProfile(EProfile profile, int deleted)
+        [HttpGet("profile/{profile}")]
+        public async Task<ActionResult<Account>> GetAllProfile(EProfile profile, bool deleted = false)
         {
             var account = await _accountService.GetAllProfile(profile, deleted);
 
@@ -67,7 +67,7 @@ namespace AccountAPI.Controllers
         [HttpPatch("account/{accNumber}")]
         public async Task<ActionResult<Account>> UpdateAccountRestriction(string accNumber, AccountRestrictionDTO dto)
         {
-            Account account = await _accountService.Get(accNumber, 0);
+            Account account = await _accountService.Get(accNumber, false);
 
             //dto.ManagerCpf = busca API funcionaro para ver se o CPF é manager
             //if true continua..
@@ -98,7 +98,7 @@ namespace AccountAPI.Controllers
         [HttpDelete("account/{accNumber}")]
         public async Task<ActionResult> Delete(string accNumber)
         {
-            Account account = await _accountService.Get(accNumber, 0);
+            Account account = await _accountService.Get(accNumber, false);
 
             if (account == null) return NotFound("Account not found!");
 
@@ -109,7 +109,7 @@ namespace AccountAPI.Controllers
         [HttpPost("restore/{accNumber}")]
         public async Task<ActionResult<Account>> Restore(string accNumber)
         {
-            Account account = await _accountService.Get(accNumber, 1);
+            Account account = await _accountService.Get(accNumber, true);
 
             if (account == null) return NotFound("Account not found!");
 
