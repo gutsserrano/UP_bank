@@ -22,14 +22,12 @@ namespace AccountAPI.Controllers
         public async Task<ActionResult<Transactions>> GetExtractId(string accNumber, int id)
         {
             var account = await _transactionService.GetAccount(accNumber);
-            if (account == null)
-                return NotFound("Account not found!");
+            if (account == null) return NotFound("Account not found!");
 
             Transactions transactions = null;
             transactions = await _transactionService.GetExtractId(account, id);
 
-            if (transactions == null)
-                return NotFound("Account does not have an extract with this id!");
+            if (transactions == null) return NotFound("Account does not have an extract with this id!");
 
             return Ok(transactions);
         }
@@ -55,7 +53,7 @@ namespace AccountAPI.Controllers
         {
             List<Transactions> transactions = null;
             transactions = await _transactionService.GetExtract(accNumber);
-            if (transactions == null) return NotFound();
+            if (transactions == null) return NotFound("No extract found or account does not exists!");
 
             return Ok(transactions);
         }

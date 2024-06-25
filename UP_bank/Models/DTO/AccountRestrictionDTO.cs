@@ -8,6 +8,7 @@ namespace Models.DTO
 {
     public class AccountRestrictionDTO
     {
+        public string ManagerCpf { get; set; }
         public bool Restriction { get; set; }
     }
 }

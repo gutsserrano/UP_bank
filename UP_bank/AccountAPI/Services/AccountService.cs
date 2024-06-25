@@ -27,6 +27,40 @@ namespace AccountAPI.Services
             return account;
         }
 
+        public async Task<List<Account>> GetAllProfile(EProfile profile, int deleted)
+        {
+            List<Account> accounts = null;
+            accounts = (deleted == 0) ? await _accountCollection.Find(x => x.Profile == profile).ToListAsync() : await _accountHistoryCollection.Find(x => x.Profile == profile).ToListAsync();
+            return accounts;
+        }
+
+        public async Task<List<Account>> GetAll(int param, int deleted)
+        {
+            List<Account> accounts = null;
+
+            if (param == 0) // GetAll
+                accounts = (deleted == 0) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
+
+            if (param == 1) // GetAll Restricted
+                accounts = (deleted == 0) ? await _accountCollection.Find(x => x.Restriction == true).ToListAsync() : await _accountHistoryCollection.Find(x => x.Restriction == true).ToListAsync();
+
+            if (param == 2) // GetAll Active Loan
+            {
+                List<Account> accountsLoan = new List<Account>();
+                accounts = (deleted == 0) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
+                foreach (var acc in accounts)
+                {
+                    if ((!accountsLoan.Exists(x => x.Number == acc.Number)) && (acc.Extract.Find(x => x.Type == EType.Loan) != null))
+                    {
+                        accountsLoan.Add(acc);
+                    }
+                }
+                accounts = accountsLoan;
+            }
+
+            return accounts;
+        }
+
         public async Task<Account> GetHistory(string number)
         {
             return await _accountHistoryCollection.Find(x => x.Number == number).FirstOrDefaultAsync();
