@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Services;
+using Services.AddressApiServices;
 using UP_bank.EmployeeAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<UP_bankEmployeeAPIContext>(options =>
@@ -13,6 +14,7 @@ builder.Services.AddControllers();
 //builder.Services.AddSingleton<IAddressApiService, UP_bank.AddressApi>();
 
 builder.Services.AddSingleton<EmployeeService>();
+builder.Services.AddSingleton<UPBankAddressApi>();
 
 var app = builder.Build();
 

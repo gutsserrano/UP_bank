@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UP_bank.EmployeeAPI.Data;
 
@@ -11,9 +12,10 @@ using UP_bank.EmployeeAPI.Data;
 namespace Up_bank.EmployeeAPI.Migrations
 {
     [DbContext(typeof(UP_bankEmployeeAPIContext))]
-    partial class Up_bankEmployeeAPIContextModelSnapshot : ModelSnapshot
+    [Migration("20240624162757_second-migration")]
+    partial class secondmigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,6 +38,10 @@ namespace Up_bank.EmployeeAPI.Migrations
                         .IsRequired()
                         .HasMaxLength(9)
                         .HasColumnType("nvarchar(9)");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("DtBirth")
                         .HasColumnType("datetime2");
@@ -68,6 +74,15 @@ namespace Up_bank.EmployeeAPI.Migrations
                     b.HasKey("Cpf");
 
                     b.ToTable("Employee");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Employee");
+                });
+
+            modelBuilder.Entity("Models.DeletedEmployee", b =>
+                {
+                    b.HasBaseType("Models.Employee");
+
+                    b.HasDiscriminator().HasValue("DeletedEmployee");
                 });
 #pragma warning restore 612, 618
         }

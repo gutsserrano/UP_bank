@@ -1,5 +1,6 @@
 ﻿using Models;
 using Models.DTO;
+using Services.AddressApiServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,19 +11,17 @@ namespace Services
 {
     public class EmployeeService
     {
-        //public readonly IAddress _api;
+        public readonly UPBankAddressApi _api;
 
-        /*
-        public EmployeeService(IAddress api) 
+        public EmployeeService(UPBankAddressApi api) 
         {
             _api = api;
         }
-        */
+        
         
 
         //CRUD METHODS
 
-        /*
         public async Task<Address> GetAddress(string zipCode, string number)
         {
             Address? address = await _api.GetAddress(new AddressDTO { ZipCode = zipCode, Number = number });
@@ -32,7 +31,20 @@ namespace Services
 
             return address;
         }
-        */
+
+
+        public async Task<Address> GetAddressPostMethod(AddressDTO addressDTO)
+        {
+            Address? address = await _api.GetAddress(addressDTO);
+
+            if (address == null)
+                address = await _api.CreateAddress(addressDTO);
+
+            if (address == null)
+                throw new Exception("Invalid Zip Code!");
+
+            return address;
+        }
 
         public async Task<Employee> CreateEmployee(EmployeeDTO employeeDTO, Address address)
         {
@@ -50,27 +62,29 @@ namespace Services
                     Phone = employeeDTO.Phone,
                     Email = employeeDTO.Email,
                     Address = address,
-                    AddressZipCode = employeeDTO.AddressZipCode,
-                    AddressNumber = employeeDTO.AddressNumber,
                     Manager = employeeDTO.Manager,
-                    Register = employeeDTO.Register
+                    Register = employeeDTO.Register,
+                    AddressZipCode = address.ZipCode,
+                    AddressNumber = address.Number
                 };
 
                 return employee;
             }
-            catch { throw new Exception("Occurred an error while creating employee"); }
+            catch (Exception){ throw new Exception("Occurred an error while creating employee"); }
         }
 
-        public async Task<Employee> UpdateEmployee(Employee employee, EmployeeDTO employeeDTO)
+        public Employee UpdateEmployee(Employee employee, EmployeeUpdateDTO employeeUpdateDTO)
         {
             try
             {
-                employee.Name = employeeDTO.Name;
-                employee.DtBirth = employeeDTO.DtBirth;
-                employee.Sex = employeeDTO.Sex;
-                employee.Income = employeeDTO.Income;
-                employee.Phone = employeeDTO.Phone;
-                employee.Email = employeeDTO.Email;
+                employee.Cpf = employeeUpdateDTO.Cpf;
+                employee.Name = employeeUpdateDTO.Name;
+                employee.DtBirth = employeeUpdateDTO.DtBirth;
+                employee.Sex = employeeUpdateDTO.Sex;
+                employee.Income = employeeUpdateDTO.Income;
+                employee.Phone = employeeUpdateDTO.Phone;
+                employee.Email = employeeUpdateDTO.Email;
+                employee.Manager = employeeUpdateDTO.Manager;
 
                 return employee;
             }
@@ -129,7 +143,7 @@ namespace Services
 
                 return valid && ValidateFirstDigit(cpf) && ValidateSecondDigit(cpf);
             }
-            catch (Exception ex) { return false; }
+            catch (Exception) { return false; }
         }
 
         public static bool ValidateFirstDigit(string cpf)
@@ -151,7 +165,7 @@ namespace Services
                 if (rest == firstDigit) return true;
                 return false;
             }
-            catch (Exception ex) { return false; }
+            catch (Exception) { return false; }
         }
 
         public static bool ValidateSecondDigit(string cpf)
@@ -172,7 +186,7 @@ namespace Services
                 if (rest == secondDigit) return true;
                 return false;
             }
-            catch (Exception ex) { return false; }
+            catch (Exception) { return false; }
         }
         #endregion
 

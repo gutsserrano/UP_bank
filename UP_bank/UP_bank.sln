@@ -7,10 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Models", "Models\Models.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{21B68C3D-1870-4670-A50F-579C7B73BE42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UPBank.AddressAPI", "UPBank.AddressAPI\UPBank.AddressAPI.csproj", "{0731A6B6-DF2C-48D6-B623-3EF39E6352C7}"
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{21B68C3D-1870-4670-A50F-579C7B73BE42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UPBank.AddressAPI", "UPBank.AddressAPI\UPBank.AddressAPI.csproj", "{0731A6B6-DF2C-48D6-B623-3EF39E6352C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UP_bank.EmployeeAPI", "Up_bank.EmployeeAPI\UP_bank.EmployeeAPI.csproj", "{F7525EC5-F19D-4F5E-8F9C-6D62F79450AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UP_bank.EmployeeAPI", "Up_bank.EmployeeAPI\UP_bank.EmployeeAPI.csproj", "{F7525EC5-F19D-4F5E-8F9C-6D62F79450AA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UP_bankEmployeeAPITests", "UP_bankEmployeeAPITests", "{6A4362B6-3069-4EC7-AB5F-5CC86217DF5E}"
 EndProject

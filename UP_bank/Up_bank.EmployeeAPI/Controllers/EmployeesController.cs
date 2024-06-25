@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.DTO;
+using NuGet.ContentModel;
 using Services;
 using UP_bank.EmployeeAPI.Data;
 
@@ -35,47 +38,65 @@ namespace Up_bank.EmployeeAPI.Controllers
 
             List<Employee> employees = await _context.Employee.ToListAsync();
 
-            /*
             foreach (Employee employee in employees)
             {
                 Address address = await _employeeService.GetAddress(employee.AddressZipCode, employee.AddressNumber);
                 employee.Address = address;
             }
-            */ 
 
             return Ok(employees);
 
         }
 
         // GET: api/Employees/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Employee>> GetEmployee(string id)
+        [HttpGet("{cpf}")]
+        public async Task<ActionResult<Object>> GetEmployee(string cpf)
         {
-          if (_context.Employee == null)
-          {
-              return NotFound();
-          }
-            var employee = await _context.Employee.FindAsync(id);
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14 ) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
 
-            if (employee == null)
+
+            if (_context.Employee == null)
             {
                 return NotFound();
             }
 
-            return employee;
+            
+            Employee employee = await _context.Employee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
+            
+            if (EmployeeExists(cpf) == true)
+            {
+                if (employee == null)
+                {
+                    return NotFound();
+                }
+
+                Address address = await _employeeService.GetAddress(employee.AddressZipCode, employee.AddressNumber);
+                employee.Address = address;
+                return employee;
+            }
+            
+            else { return NotFound(); }
         }
 
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(string id, Employee employee)
+        [HttpPut("{cpf}")]
+        public async Task<ActionResult<Employee>> PutEmployee(string cpf, EmployeeUpdateDTO employeeUpdateDTO)
         {
-            if (id != employee.Cpf)
-            {
-                return BadRequest();
-            }
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
 
-            _context.Entry(employee).State = EntityState.Modified;
+
+            if (cpf != employeeUpdateDTO.Cpf) { return BadRequest("This CPF doesn't corresponds to this employee"); }
+
+            Employee employee = await _context.Employee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
+
+            if (employee == null) { return NotFound("This employee doesn't exists!"); }
+
+            _context.Entry(_employeeService.UpdateEmployee(employee, employeeUpdateDTO)).State = EntityState.Modified;
 
             try
             {
@@ -83,7 +104,7 @@ namespace Up_bank.EmployeeAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(id))
+                if (!EmployeeExists(cpf))
                 {
                     return NotFound();
                 }
@@ -93,47 +114,52 @@ namespace Up_bank.EmployeeAPI.Controllers
                 }
             }
 
-            return NoContent();
+            return employee;
+
         }
 
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public async Task<ActionResult<Employee>> PostEmployee(EmployeeDTO employeeDTO)
         {
-          if (_context.Employee == null)
-          {
-              return Problem("Entity set 'Up_bankEmployeeAPIContext.Employee'  is null.");
-          }
-            _context.Employee.Add(employee);
+            Employee employee = null;
+
+            if (employeeDTO.Cpf.Count() == 11) { employeeDTO.Cpf = InsertMask(employeeDTO.Cpf); }
+            else if (employeeDTO.Cpf.Count() != 14 && employeeDTO.Cpf.Count() != 11) { return BadRequest("The CPF is wrong!"); }
+
+            var cpfIstRegistered = await _context.FindAsync<Employee>(employeeDTO.Cpf);
+            if (cpfIstRegistered != null) { return BadRequest("This CPF already exists!"); }
+
             try
             {
+                Address address = await _employeeService.GetAddressPostMethod(employeeDTO.AddressDTO);
+
+                if(address == null) { return BadRequest("This Zip Code cannot be found!"); }
+
+                employee = await _employeeService.CreateEmployee(employeeDTO, address);
+
+                _context.Employee.Add(employee);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
-            {
-                if (EmployeeExists(employee.Cpf))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            catch (Exception ex) { return BadRequest(ex.Message); }
 
-            return CreatedAtAction("GetEmployee", new { id = employee.Cpf }, employee);
+            return Ok(employee);
         }
 
         // DELETE: api/Employees/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployee(string id)
+        public async Task<IActionResult> DeleteEmployee(string cpf)
         {
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
             if (_context.Employee == null)
             {
                 return NotFound();
             }
-            var employee = await _context.Employee.FindAsync(id);
+            var employee = await _context.Employee.FindAsync(cpf);
             if (employee == null)
             {
                 return NotFound();
@@ -142,12 +168,31 @@ namespace Up_bank.EmployeeAPI.Controllers
             _context.Employee.Remove(employee);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(employee);
         }
 
-        private bool EmployeeExists(string id)
+        private bool EmployeeExists(string cpf)
         {
-            return (_context.Employee?.Any(e => e.Cpf == id)).GetValueOrDefault();
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            return (_context.Employee?.Any(e => e.Cpf == cpf)).GetValueOrDefault();
+        }
+
+        private bool DeletedEmployeeExists(string cpf)
+        {
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            return (_context.Employee?.Any(de => de.Cpf == cpf)).GetValueOrDefault();
+        }
+
+        public static string RemoveMask(string cpf)
+        {
+            cpf = cpf.Replace(".", "");
+            cpf = cpf.Replace("-", "");
+            return cpf;
+        }
+
+        public static string InsertMask(string cpf)
+        {
+            return Convert.ToUInt64(cpf).ToString(@"000\.000\.000\-00");
         }
     }
 }

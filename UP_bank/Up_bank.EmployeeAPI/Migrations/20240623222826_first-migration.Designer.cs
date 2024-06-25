@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Up_bank.EmployeeAPI.Data;
+using UP_bank.EmployeeAPI.Data;
 
 #nullable disable
 
 namespace Up_bank.EmployeeAPI.Migrations
 {
-    [DbContext(typeof(Up_bankEmployeeAPIContext))]
+    [DbContext(typeof(UP_bankEmployeeAPIContext))]
     [Migration("20240623222826_first-migration")]
     partial class firstmigration
     {
