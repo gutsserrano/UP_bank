@@ -35,6 +35,13 @@ namespace AccountAPI.Services
             return accounts;
         }
 
+        public async Task<List<Account>> GetAllByAgency(string agency, bool deleted)
+        {
+            List<Account> accounts = null;
+            accounts = (!deleted) ? await _accountCollection.Find(x => x.Agency.Number == agency).ToListAsync() : await _accountHistoryCollection.Find(x => x.Agency.Number == agency).ToListAsync();
+            return accounts;
+        }
+
         public async Task<List<Account>> GetAll(int param, bool deleted)
         {
             List<Account> accounts = null;
@@ -51,7 +58,7 @@ namespace AccountAPI.Services
                 accounts = (!deleted) ? await _accountCollection.Find(x => true).ToListAsync() : await _accountHistoryCollection.Find(x => true).ToListAsync();
                 foreach (var acc in accounts)
                 {
-                    if(acc.Extract != null)
+                    if (acc.Extract != null)
                     {
                         if ((!accountsLoan.Exists(x => x.Number == acc.Number)) && (acc.Extract.Find(x => x.Type == EType.Loan) != null))
                         {
@@ -60,7 +67,7 @@ namespace AccountAPI.Services
                     }
                 }
 
-                if(accountsLoan.Count == 0)
+                if (accountsLoan.Count == 0)
                     accountsLoan = null;
 
                 accounts = accountsLoan;
@@ -133,6 +140,15 @@ namespace AccountAPI.Services
             return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
         }
 
+        public async Task<Account> UpdateAccountOverdraft(AccountOverdraftDTO accountOverdraftDTO, Account account)
+        {
+            var filter = Builders<Account>.Filter.Eq("Number", account.Number);
+            var update = Builders<Account>.Update.Set("Overdraft", accountOverdraftDTO.Overdraft);
+            await _accountCollection.UpdateOneAsync(filter, update);
+
+            return await _accountCollection.Find(x => x.Number == account.Number).FirstOrDefaultAsync();
+        }
+
         public async Task<Account> UpdateAccountBalance(Transactions transaction, Account account)
         {
             int Type = (int)transaction.Type;
@@ -174,7 +190,25 @@ namespace AccountAPI.Services
             {
                 throw new ArgumentException("Error closing account: " + e.Message);
             }
-            
+        }
+
+        public async Task<int> DeleteByAgency(List<Account> accounts)
+        {
+            int count = 0;
+            try
+            {
+                foreach (var account in accounts)
+                {
+                    count++;
+                    _accountHistoryCollection.InsertOne(account);
+                    _accountCollection.DeleteOne(x => x.Number == account.Number);
+                }
+                return count;
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException("Error closing account: " + e.Message);
+            }
         }
 
         public async Task<Account> Restore(Account account)
@@ -184,7 +218,26 @@ namespace AccountAPI.Services
             return account;
         }
 
-        public  List<Account> buildList(List<Account> acc, List <Account> acc2)
+        public async Task<int> RestoreByAgency(List<Account> accounts)
+        {
+            int count = 0;
+            try
+            {
+                foreach (var account in accounts)
+                {
+                    count++;
+                    _accountCollection.InsertOne(account);
+                    _accountHistoryCollection.DeleteOne(x => x.Number == account.Number);
+                }
+                return count;
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException("Error restoring account: " + e.Message);
+            }
+        }
+
+        public List<Account> BuildList(List<Account> acc, List<Account> acc2)
         {
             var result = new List<Account>();
             foreach (var item in acc)
@@ -197,6 +250,6 @@ namespace AccountAPI.Services
             }
             return result;
         }
-        
+
     }
 }
