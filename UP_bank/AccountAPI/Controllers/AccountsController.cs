@@ -128,6 +128,18 @@ namespace AccountAPI.Controllers
             return Ok(accountBalanceDTO);
         }
 
+        [HttpGet("getAllAccounts")]
+        public async Task<ActionResult<Account>> GetAllAccounts()
+        {
+            var accounts = await _accountService.GetAll(0, false);
+            var acc_deleted = await _accountService.GetAll(0, true);  
+            var lst = _accountService.buildList(accounts,acc_deleted); 
+
+            if (lst == null) return NotFound("No accounts were located!");
+
+            return Ok(lst);
+        }
+
 
         public Account CriaContaTemp()
         {
