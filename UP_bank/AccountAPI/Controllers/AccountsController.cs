@@ -102,7 +102,7 @@ namespace AccountAPI.Controllers
             //if true continua..
             if (account == null) return NotFound("Account not found");
 
-            if (dto.Restriction == account.Restriction) return BadRequest($"Account is already in restriction status {account.Restriction}");
+            if (dto.Restriction == account.Restriction) return Problem($"Account is already in restriction status {account.Restriction}");
 
             account = await _accountService.UpdateAccountRestriction(dto, account);
             return Ok(account);
