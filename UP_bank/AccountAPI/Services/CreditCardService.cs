@@ -74,30 +74,32 @@ namespace AccountAPI.Services
         }
         public async Task<CreditCard> ActiveCard(string account)
         {
+            try
+            {
+                var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
 
-           var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
-            
 
-            if (acc == null)
-                throw new ArgumentException("Account or card not found!");
+                if (acc == null)
+                    throw new ArgumentException("Account or card not found!");
 
-            if (acc.Restriction)
-                throw new ArgumentException("Account is restricted!");
+                if (acc.Restriction)
+                    throw new ArgumentException("Account is restricted!");
 
-            if (acc.CreditCard.Active)
-                throw new ArgumentException("Card is already active!");
+                if (acc.CreditCard.Active)
+                    throw new ArgumentException("Card is already active!");
 
-            CreditCard creditCard = acc.CreditCard;
-            var filter = Builders<Account>.Filter.Eq("Number", acc.Number);
-            var update = Builders<Account>.Update.Set("CreditCard.Active", true);
-            await _accountCollection.UpdateOneAsync(filter, update);
-            creditCard.Active = true;
+                CreditCard creditCard = acc.CreditCard;
+                var filter = Builders<Account>.Filter.Eq("Number", acc.Number);
+                var update = Builders<Account>.Update.Set("CreditCard.Active", true);
+                await _accountCollection.UpdateOneAsync(filter, update);
+                creditCard.Active = true;
 
-            return creditCard;
+                return creditCard;
+            }
+            catch
+            {
+                throw;
+            }
         }
-
-
-
-
     }
 }
