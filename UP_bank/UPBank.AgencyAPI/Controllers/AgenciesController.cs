@@ -338,6 +338,11 @@ namespace UPBank.AgencyAPI.Controllers
                 return Problem("Entity set 'UPBankAgencyAPIContext.Agency'  is null.");
             }
 
+            if(_context.Agency.Find(agencyDTO.Number) != null || _context.DeletedAgency.Find(agencyDTO.Number) != null)
+            {
+                return BadRequest("Agency already exists.");
+            }
+
             List<AgencyEmployee> agencyEmployees = new();
             foreach(var item in agencyDTO.EmployeesCpf)
             {
