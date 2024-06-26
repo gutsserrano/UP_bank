@@ -136,6 +136,8 @@ namespace Models
 
         private string FormatName(string name)
         {
+            name = name.Trim();
+
             string[] parts = name.Split(' ');
 
             if (parts.Length <= 2)

@@ -165,18 +165,18 @@ namespace Services
 
         #endregion
 
-        public async Task<Account> PutAproveAccount(string accNumber, bool restriction)
+        public async Task<Account> PutAproveAccount(string accNumber, bool restriction, string employeeCPF)
         {
             Account account = null;
 
             try
             {
-                AccountRestrictionDTO dto = new AccountRestrictionDTO { Restriction = restriction };
+                AccountRestrictionDTO dto = new AccountRestrictionDTO { Restriction = restriction, ManagerCpf = employeeCPF };
 
                 StringContent content = new(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
 
                 var response = _httpClient.PatchAsync($"https://localhost:7244/api/accounts/account/{accNumber}", content).Result;
-                if (response.IsSuccessStatusCode)
+                if ((int) response.StatusCode == 200)
                 {
                     account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
                 }
@@ -244,6 +244,28 @@ namespace Services
             }
 
             return account;
+        }
+
+        public async Task<Customer> GetCustomer(string cpf)
+        {
+            Customer customer = null;
+
+            try
+            {
+                var response = _httpClient.GetAsync($"https://localhost:7147/api/Customers/{cpf}").Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return customer;
         }
     }
 }

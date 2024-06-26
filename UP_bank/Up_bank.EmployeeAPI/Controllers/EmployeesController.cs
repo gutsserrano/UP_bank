@@ -21,12 +21,10 @@ namespace Up_bank.EmployeeAPI.Controllers
     {
         private readonly UP_bankEmployeeAPIContext _context;
         private readonly EmployeeService _employeeService;
-        private readonly APICustomerContext _customerAPIContext;
-        public EmployeesController(UP_bankEmployeeAPIContext context, EmployeeService employeeService, APICustomerContext customerAPIContext)
+        public EmployeesController(UP_bankEmployeeAPIContext context, EmployeeService employeeService)
         {
             _context = context;
             _employeeService = employeeService;
-            _customerAPIContext = customerAPIContext;
         }
 
         // GET: api/Employees
@@ -103,7 +101,7 @@ namespace Up_bank.EmployeeAPI.Controllers
 
             if (employee.Manager == true)
             {
-                Account account = await _employeeService.PutAproveAccount(accNumber, restriction);
+                Account account = await _employeeService.PutAproveAccount(accNumber, restriction, employeeCPF);
 
                 if (account == null) return NotFound("Account not found");
 
@@ -114,19 +112,6 @@ namespace Up_bank.EmployeeAPI.Controllers
             
         }
 
-        // PUT: api/Employees/DefineAccountPerfil/{employeeCPF}
-        [HttpPost("DefineAccountPerfil/{employeeCPF}")]
-        public async Task<ActionResult<Account>> DefineAccountPerfil(string employeeCPF, AccountDTO accountDTO)
-        {
-            Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
-            if (employee == null) return BadRequest("Employee not found");
-
-            Account account = await _employeeService.DefineAccountPerfil(accountDTO);
-
-            if (account == null) return NotFound("Account not created");
-
-            return Ok(account);
-        }
 
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -165,6 +150,24 @@ namespace Up_bank.EmployeeAPI.Controllers
 
         }
 
+        // POST: api/Employees/DefineAccountPerfil/{employeeCPF}
+        [HttpPost("DefineAccountPerfil/{employeeCPF}")]
+        public async Task<ActionResult<Account>> DefineAccountPerfil(string employeeCPF, AccountDTO accountDTO)
+        {
+            if (employeeCPF.Count() == 11) { employeeCPF = InsertMask(employeeCPF); }
+            else if (employeeCPF.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
+            Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
+            if (employee == null) return BadRequest("Employee not found");
+
+            Account account = await _employeeService.DefineAccountPerfil(accountDTO);
+
+            if (account == null) return NotFound("Account not created");
+
+            return Ok(account);
+        }
+
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -175,7 +178,7 @@ namespace Up_bank.EmployeeAPI.Controllers
             if (employeeDTO.Cpf.Count() == 11) { employeeDTO.Cpf = InsertMask(employeeDTO.Cpf); }
             else if (employeeDTO.Cpf.Count() != 14 && employeeDTO.Cpf.Count() != 11) { return BadRequest("The CPF is wrong!"); }
 
-            Customer customer = await _customerAPIContext.Customer.Where(c => c.Cpf == employeeDTO.Cpf).FirstOrDefaultAsync();
+            Customer customer = await _employeeService.GetCustomer(employeeDTO.Cpf);
             if (customer.Cpf == employeeDTO.Cpf) { return BadRequest("There's a customer with this CPF."); }
 
             var cpfIstRegistered = await _context.FindAsync<Employee>(employeeDTO.Cpf);
