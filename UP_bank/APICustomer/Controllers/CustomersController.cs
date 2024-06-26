@@ -63,13 +63,13 @@ namespace APICustomer.Controllers
         public async Task<ActionResult<Customer>> GetCustomerByCpf(string cpf)
         {
 
-            if (cpf.Length != 11) { return BadRequest("The CPF is wrong!"); }
+            if (cpf.Length != 11)  { return BadRequest("The CPF isn't valid!"); }
+            cpf = InsertMask(cpf);
 
-          if (_context.Customer == null)
+            if (_context.Customer == null)
           {
               return NotFound();
           }
-
 
             var customer = await _context.Customer.FindAsync(cpf);
 
