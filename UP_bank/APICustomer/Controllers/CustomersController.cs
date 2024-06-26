@@ -62,11 +62,14 @@ namespace APICustomer.Controllers
         [HttpGet("{cpf}")]
         public async Task<ActionResult<Customer>> GetCustomerByCpf(string cpf)
         {
-          if (_context.Customer == null)
+
+            if (cpf.Length != 11)  { return BadRequest("The CPF isn't valid!"); }
+            cpf = InsertMask(cpf);
+
+            if (_context.Customer == null)
           {
               return NotFound();
           }
-
 
             var customer = await _context.Customer.FindAsync(cpf);
 
@@ -89,8 +92,6 @@ namespace APICustomer.Controllers
             {
                 return NotFound();
             }
-
-
             return customer;
         }
 
@@ -235,9 +236,7 @@ namespace APICustomer.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(customer);
-
         }
-
         private bool CustomerExists(string cpf)
         {
             if(cpf.Count() == 11) { cpf = InsertMask(cpf); }
