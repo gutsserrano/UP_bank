@@ -178,8 +178,8 @@ namespace Up_bank.EmployeeAPI.Controllers
             if (employeeDTO.Cpf.Count() == 11) { employeeDTO.Cpf = InsertMask(employeeDTO.Cpf); }
             else if (employeeDTO.Cpf.Count() != 14 && employeeDTO.Cpf.Count() != 11) { return BadRequest("The CPF is wrong!"); }
 
-            Customer customer = await _employeeService.GetCustomer(employeeDTO.Cpf);
-            if (customer.Cpf == employeeDTO.Cpf) { return BadRequest("There's a customer with this CPF."); }
+            //Customer customer = await _employeeService.GetCustomer(employeeDTO.Cpf);
+            //if (customer.Cpf == employeeDTO.Cpf) { return BadRequest("There's a customer with this CPF."); }
 
             var cpfIstRegistered = await _context.FindAsync<Employee>(employeeDTO.Cpf);
             if (cpfIstRegistered != null) { return BadRequest("This CPF already exists!"); }

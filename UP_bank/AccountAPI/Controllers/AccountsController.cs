@@ -75,15 +75,14 @@ namespace AccountAPI.Controllers
 
                 var customers = await _accountService.GetCustomer(accountDTO);  // Get List Customers DTO Api
                 if (customers == null) return NotFound("Customers not found!");
-                
 
                 var account = await _accountService.CreateNewAccount(accountDTO, agency, customers, profile);    // Create Account
-                
+
                 if (account == null) return BadRequest("Could not create an account at this time!");
 
                 await _accountService.Post(account);    // Post Account
 
-                var creditCard = await _creditCardService.Post(account); // Post Credit Card to Account
+                var creditCard = await _creditCardService.Post(customers, account); // Post Credit Card to Account
                 if (creditCard == null) return BadRequest("Account was created but without a credit card.");
 
                 return Ok(account);

@@ -44,7 +44,7 @@ namespace AccountAPI.Controllers
             if (account.Restriction == true)
                 return BadRequest("Account is restricted!");
 
-            return Ok(await _creditCardService.Post(account));
+            return Ok(await _creditCardService.Post(null, account));
         }
 
         [HttpPut("{accNumber}, {cardNumber}")]
