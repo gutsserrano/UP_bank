@@ -78,6 +78,10 @@ namespace AccountAPI.Controllers
                 if (customers == null) return NotFound("Customers not found!");
                 if (customers[0].Restriction) return BadRequest("Account Owner Cpf is restricted!");
 
+                if (customers.Count > 1)
+                    if (customers[0].Cpf == customers[1].Cpf) return BadRequest("Inform a different or empty dependent cpf!");
+
+
 
                 var account = await _accountService.CreateNewAccount(accountDTO, agency, customers, profile);    // Create Account
 
