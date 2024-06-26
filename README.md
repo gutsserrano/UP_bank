@@ -35,16 +35,6 @@ Toda conta deverá ser liberada pelo gerente da agência. Até isso acontecer, a
 porém é inativa, não podendo fazer nenhum tipo de operação. Após aprovação, as contas
 podem ser bloqueadas novamente.
 
-### APIs Utilizadas
-
-**API Endereço**<br>
-Consulta a API do VIACEP, a partir do CEP, informando apenas o número e complemento.
-
-**API Clientes**<br>
-**API Funcionarios**<br>
-**API Contas**<br>
-**API Agencia**<br>
-
 # Documentação de Rotas
 
 ## Endereços
