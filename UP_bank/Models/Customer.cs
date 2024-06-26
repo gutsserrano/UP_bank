@@ -25,7 +25,6 @@ namespace Models
             Income = customerUpdateDTO.Income;
             Email = customerUpdateDTO.Email;
             Phone = customerUpdateDTO.Phone;
-            Restriction = customerUpdateDTO.Restriction;
         }
     }
 

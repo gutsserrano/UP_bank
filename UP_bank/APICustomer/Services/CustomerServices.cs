@@ -21,7 +21,6 @@ namespace APICustomer.Services
                 customer.Income = customerUpdateDTO.Income;
                 customer.Phone = customerUpdateDTO.Phone;
                 customer.Email = customerUpdateDTO.Email;
-                customer.Restriction = customerUpdateDTO.Restriction;
 
                 return customer;
             }

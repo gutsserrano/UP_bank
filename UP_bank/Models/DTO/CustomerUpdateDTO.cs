@@ -19,6 +19,5 @@ namespace Models.DTO
         public double Income { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
-        public bool Restriction { get; set; }
     }
 }
