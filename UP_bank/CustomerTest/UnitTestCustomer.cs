@@ -1,8 +1,10 @@
 using APICustomer.Controllers;
 using APICustomer.Data;
+using APICustomer.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Services.AddressApiServices;
 
 namespace CustomerTest
 {
@@ -34,7 +36,7 @@ namespace CustomerTest
             InitializeDataBase();
             using (var context = new APICustomerContext(options))
             {
-                CustomersController customerController = new CustomersController(context);
+                CustomersController customerController = new CustomersController(context, new UPBankAddressApi(),new CustomerServices());
                 IEnumerable<Customer> customers = customerController.GetCustomer().Result.Value;
                 Assert.Equal(ReferenceEquals(customers, customers), true);
 
@@ -46,7 +48,7 @@ namespace CustomerTest
             InitializeDataBase();
             using (var context = new APICustomerContext(options))
             {
-                CustomersController customerController = new CustomersController(context);
+                CustomersController customerController = new CustomersController(context, new UPBankAddressApi(), new CustomerServices());
                 ActionResult<Customer> customer = await customerController.GetCustomerByCpf("12345678913");
                 Assert.Equal("Test Customer", customer.Value.Name);
 

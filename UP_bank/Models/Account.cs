@@ -20,13 +20,13 @@ namespace Models
         //public List<Customer> Customers { get; set; }
         public List<AgencyCustomerDTO> Customers { get; set; }
         public bool Restriction { get; set; }
-        public CreditCard CreditCard { get; set; }
+        public CreditCard? CreditCard { get; set; }
         public double Overdraft { get; set; }
         [BsonRepresentation(BsonType.String)]         // Convert Enum to string in document
         public EProfile Profile { get; set; }
         public DateTime Date { get; set; }
         public double Balance { get; set; }
         [JsonProperty("Extract")]
-        public List<Transactions> Extract { get; set; }
+        public List<Transactions>? Extract { get; set; }
     }
 }

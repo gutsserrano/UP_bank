@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Models.DTO;
+using System;
+using System.Net.Http;
 
 namespace AccountAPI.Controllers
 {
@@ -11,9 +13,11 @@ namespace AccountAPI.Controllers
     public class AccountsController : ControllerBase
     {
         AccountService _accountService;
-        public AccountsController(AccountService service)
+        CreditCardService _creditCardService;
+        public AccountsController(AccountService service, CreditCardService creditCardService)
         {
             _accountService = service;
+            _creditCardService = creditCardService;
         }
 
         [HttpGet("account/{accNumber}")]
@@ -31,17 +35,28 @@ namespace AccountAPI.Controllers
         {
             var accounts = await _accountService.GetAll(type, deleted);
 
-            if (accounts == null) return NotFound("No accounts were located!");
+            if (accounts == null) return NotFound("No accounts were found!");
 
             return Ok(accounts);
         }
+
 
         [HttpGet("profile/{profile}")]
         public async Task<ActionResult<Account>> GetAllProfile(EProfile profile, bool deleted = false)
         {
             var accounts = await _accountService.GetAllProfile(profile, deleted);
 
-            if (accounts == null) return NotFound("No accounts were located!");
+            if (accounts == null) return NotFound("No accounts were found!");
+
+            return Ok(accounts);
+        }
+
+        [HttpGet("agency/{agency}")]
+        public async Task<ActionResult<Account>> GetAllByAgency(string agency, bool deleted = false)
+        {
+            var accounts = await _accountService.GetAllByAgency(agency, deleted);
+
+            if (accounts == null) return NotFound("No accounts were found!");
 
             return Ok(accounts);
         }
@@ -49,19 +64,32 @@ namespace AccountAPI.Controllers
         [HttpPost]
         //https://localhost:7244/api/accounts/ test POST
         // aqui deve receber Account json
-        public async Task<ActionResult<Account>> Post()
+        public async Task<ActionResult<Account>> Post(AccountDTO accountDTO)
         {
-            var account = CriaContaTemp(); // temporario
             try
             {
-                await _accountService.Post(CriaContaTemp()); // temporario
-                await _accountService.Post(account);
+                EProfile profile = (EProfile)Enum.Parse(typeof(EProfile), accountDTO.Profile);
+
+                var agency = await _accountService.GetAgency(accountDTO);       // Get Agency DTO Api
+                if (agency == null) return NotFound("Agency not found!");
+
+                var customers = await _accountService.GetCustomer(accountDTO);  // Get List Customers DTO Api
+                if (customers == null) return NotFound("Customers not found!");
+
+                var account = await _accountService.CreateNewAccount(accountDTO, agency, customers, profile);    // Create Account
+                if (account == null) return BadRequest("Could not create an account at this time!");
+
+                await _accountService.Post(account);    // Post Account
+
+                var creditCard = await _creditCardService.Post(account); // Post Credit Card to Account
+                if (creditCard == null) return BadRequest("Account was created but without a credit card.");
+
+                return Ok(account);
             }
             catch (Exception)
             {
                 return BadRequest("Error creating account!");
             }
-            return Ok(account);
         }
 
         [HttpPatch("account/{accNumber}")]
@@ -110,6 +138,21 @@ namespace AccountAPI.Controllers
             return Ok(account);
         }
 
+        [HttpPatch("account/{accNumber}/overdraft/")]
+        public async Task<ActionResult<Account>> UpdateAccountOverdraft(string accNumber, AccountOverdraftDTO accountOverdraftDTO)
+        {
+            Account account = await _accountService.Get(accNumber, false);
+
+            if (account == null) return NotFound("Account not found");
+
+            if (accountOverdraftDTO.Overdraft < 0) return BadRequest("Inform a positive value.");
+
+            if (account.Overdraft == accountOverdraftDTO.Overdraft) return BadRequest($"Account overdraft is already $ {account.Overdraft}");
+
+            account = await _accountService.UpdateAccountOverdraft(accountOverdraftDTO, account);
+            return Ok(account);
+        }
+
         [HttpDelete("close-account/account/{accNumber}")]
         public async Task<ActionResult> Delete(string accNumber)
         {
@@ -118,6 +161,19 @@ namespace AccountAPI.Controllers
 
             await _accountService.Delete(account);
             return Ok("Account successfully closed!");
+        }
+
+        [HttpDelete("close-account/agency/{agency}")]
+        public async Task<ActionResult> DeleteByAgency(string agency)
+        {
+            var accounts = await _accountService.GetAllByAgency(agency, false);
+            if (accounts == null) return NotFound("No accounts were found!");
+
+            var result = await _accountService.DeleteByAgency(accounts);
+            if (result == 0)
+                return BadRequest("No accounts were found with this agency to delete.");
+
+            return Ok("Accounts were successfully closed!");
         }
 
         [HttpPost("restore/{accNumber}")]
@@ -130,6 +186,21 @@ namespace AccountAPI.Controllers
             await _accountService.Restore(account);
             return Ok(account);
         }
+
+        [HttpPost("restore/agency/{agency}")]
+        public async Task<ActionResult<Account>> RestoreByAgency(string agency)
+        {
+            var accounts = await _accountService.GetAllByAgency(agency, true);
+
+            if (accounts == null) return NotFound("No accounts were found!");
+
+            var result = await _accountService.RestoreByAgency(accounts);
+            if (result == 0)
+                return BadRequest("No accounts were found with this agency to restore.");
+
+            return Ok("Accounts were successfully restored!");
+        }
+
         [HttpGet("checkBalance/account/{accNumber}")]
         public async Task<ActionResult<Account>> CheckBalance(string accNumber)
         {
@@ -138,63 +209,19 @@ namespace AccountAPI.Controllers
             if (account == null) return NotFound("Account not found");
 
             AccountBalanceDTO accountBalanceDTO = new AccountBalanceDTO(account);
-            if(accountBalanceDTO == null) return BadRequest("Error!");
+            if (accountBalanceDTO == null) return BadRequest("Error!");
 
             return Ok(accountBalanceDTO);
         }
 
         [HttpGet("getAllAccounts")]
-        public async Task<ActionResult<Account>> GetAllAccounts()
+        public async Task<ActionResult<List<Account>>> GetAllAccounts()
         {
-            var accounts = await _accountService.GetAll(0, false);
-            var acc_deleted = await _accountService.GetAll(0, true);  
-            var lst = _accountService.buildList(accounts,acc_deleted); 
+            var lst = _accountService.BuildList();
 
-            if (lst == null) return NotFound("No accounts were located!");
+            if (lst == null) return NotFound("No accounts were found!");
 
             return Ok(lst);
-        }
-
-
-        public Account CriaContaTemp()
-        {
-            List<AgencyCustomerDTO> customerList = new List<AgencyCustomerDTO>();
-
-            customerList.Add(new AgencyCustomerDTO
-            {
-                Cpf = "555.666.888-99",
-                DtBirth = new DateTime(1990, 10, 5),
-                Restriction = false
-            });
-
-            customerList.Add(new AgencyCustomerDTO
-            {
-                Cpf = "444.777.222-00",
-                DtBirth = new DateTime(2014, 2, 10),
-                Restriction = false
-            });
-
-            AccountAgencyDTO agency = new AccountAgencyDTO
-            {
-                Number = "0064",
-                Restriction = false,
-            };
-
-            // Cria Account
-            Account account = new Account
-            {
-                Agency = agency,
-                Number = new Random().Next(0, 1000).ToString().PadLeft(4, '0'),
-                Date = DateTime.Today,
-                Profile = EProfile.Normal,
-                Customers = customerList,
-                Overdraft = 1000,
-                Balance = 0,
-                Restriction = true, // restrito true até ser aceito pelo gerente
-                CreditCard = null, // nulo até gerar o cartao
-                Extract = null // nulo pois nao tem transacoes ainda
-            };
-            return account;
         }
     }
 }
