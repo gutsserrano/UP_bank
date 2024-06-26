@@ -286,8 +286,8 @@ namespace AccountAPI.Services
             // GET API CUSTOMERS
             List<AgencyCustomerDTO>? listCustomers = new List<AgencyCustomerDTO>();
             Customer? customer = null;
-            accountDTO.OwnerCpf = accountDTO.OwnerCpf.Replace(".", "").Replace("-", "").Trim();
-            accountDTO.DependentCpf = accountDTO.DependentCpf.Replace(".", "").Replace("-", "").Trim();
+            //accountDTO.OwnerCpf = accountDTO.OwnerCpf.Replace(".", "").Replace("-", "").Trim();
+            //accountDTO.DependentCpf = accountDTO.DependentCpf.Replace(".", "").Replace("-", "").Trim();
             try
             {
                 // Get customer owner
@@ -308,7 +308,7 @@ namespace AccountAPI.Services
                         }
                     }
                     // Ger customer dependent
-                    if (accountDTO.DependentCpf != String.Empty || accountDTO.DependentCpf != null)
+                    if (accountDTO.DependentCpf != String.Empty && accountDTO.DependentCpf != null)
                     {
                         customer = null;
                         response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.DependentCpf}");
@@ -354,23 +354,23 @@ namespace AccountAPI.Services
             #endregion
 
             /*
-
             // GET Customers
             //accountDTO.OwnerCpf;
-            List<AgencyCustomerDTO> customerList = new List<AgencyCustomerDTO>();
-            customerList.Add(new AgencyCustomerDTO
+            List<AgencyCustomerDTO> customers = new List<AgencyCustomerDTO>();
+            customers.Add(new AgencyCustomerDTO
             {
                 Cpf = "555.666.888-99",
                 DtBirth = new DateTime(1990, 10, 5),
                 Restriction = false
             });
             //accountDTO.DependentCpf;
-            customerList.Add(new AgencyCustomerDTO
+            customers.Add(new AgencyCustomerDTO
             {
                 Cpf = "444.777.222-00",
                 DtBirth = new DateTime(2014, 2, 10),
                 Restriction = false
             });
+            
 
             // GET Agency
             //accountDTO.Agency;
@@ -379,9 +379,7 @@ namespace AccountAPI.Services
                 Number = "0064",
                 Restriction = false,
             };
-
             */
-
 
             // GET Overdraft
             double overdraft = 0;

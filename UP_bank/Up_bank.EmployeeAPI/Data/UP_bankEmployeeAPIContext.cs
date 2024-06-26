@@ -15,13 +15,15 @@ namespace UP_bank.EmployeeAPI.Data
         }
 
         public DbSet<Models.Employee> Employee { get; set; } = default!;
-        //public DbSet<Models.DeletedEmployee> DeletedEmployee { get; set; } = default!;
+        public DbSet<Models.DeletedEmployee> DeletedEmployee {  get; set; } = default!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Employee>()
                 .Ignore(p => p.Address);
+
+            modelBuilder.Entity<DeletedEmployee>().ToTable("DeletedEmployee");
         }
 
 

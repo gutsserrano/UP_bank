@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UP_bank.EmployeeAPI.Data;
 
@@ -11,9 +12,10 @@ using UP_bank.EmployeeAPI.Data;
 namespace Up_bank.EmployeeAPI.Migrations
 {
     [DbContext(typeof(UP_bankEmployeeAPIContext))]
-    partial class Up_bankEmployeeAPIContextModelSnapshot : ModelSnapshot
+    [Migration("20240625212904_fourth-migration")]
+    partial class fourthmigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
