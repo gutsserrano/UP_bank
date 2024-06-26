@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 using System.Transactions;
 using Newtonsoft.Json;
+using Models.DTO;
 
 namespace AccountAPI.Services
 {
@@ -30,13 +31,13 @@ namespace AccountAPI.Services
             return account;
         }
 
-        public async Task<CreditCard> Post(Account account)
+        public async Task<CreditCard> Post(List<Customer> customers, Account account)
         {
             var accNumber = account.Number;
             CreditCard creditCard;
             bool ok = false;
             var cpfs = account.Customers.Select(c => c.Cpf).ToList();
-            List <Customer> customers = new List<Customer>();
+            /*List<Customer> customers = new List<Customer>();
 
             for (int i = 0; i < cpfs.Count; i++)
             {
@@ -48,14 +49,14 @@ namespace AccountAPI.Services
                         var customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
                         customers.Add(customer);
                     }
-                        
+
                 }
                 catch (Exception)
                 {
 
                     throw;
                 }
-            }
+            }*/
 
             do
             {
@@ -71,10 +72,11 @@ namespace AccountAPI.Services
 
             return creditCard;
         }
-        public async Task<CreditCard> ActiveCard(string account, long card)
+        public async Task<CreditCard> ActiveCard(string account)
         {
 
-           var acc = await _accountCollection.Find(x => x.Number == account && x.CreditCard.Number == card).FirstOrDefaultAsync();
+           var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
+            
 
             if (acc == null)
                 throw new ArgumentException("Account or card not found!");
@@ -82,7 +84,7 @@ namespace AccountAPI.Services
             if (acc.Restriction)
                 throw new ArgumentException("Account is restricted!");
 
-            if(acc.CreditCard.Active)
+            if (acc.CreditCard.Active)
                 throw new ArgumentException("Card is already active!");
 
             CreditCard creditCard = acc.CreditCard;

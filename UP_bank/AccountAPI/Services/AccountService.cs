@@ -262,7 +262,7 @@ namespace AccountAPI.Services
             AccountAgencyDTO agencyDTO = null;
             try
             {
-                var response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.OwnerCpf}");
+                var response = await _httpClient.GetAsync($"https://localhost:7142/api/Agencies/{accountDTO.Agency}");
                 if (response.IsSuccessStatusCode)
                 {
                     var agency = JsonConvert.DeserializeObject<Agency>(response.Content.ReadAsStringAsync().Result);
@@ -281,17 +281,17 @@ namespace AccountAPI.Services
             return agencyDTO;
         }
 
-        public async Task<List<AgencyCustomerDTO>> GetCustomer(AccountDTO accountDTO)
+        public async Task<List<Customer>> GetCustomer(AccountDTO accountDTO)
         {
             // GET API CUSTOMERS
-            List<AgencyCustomerDTO>? listCustomers = new List<AgencyCustomerDTO>();
+            List<Customer>? listCustomers = new List<Customer>();
             Customer? customer = null;
-            //accountDTO.OwnerCpf = accountDTO.OwnerCpf.Replace(".", "").Replace("-", "").Trim();
-            //accountDTO.DependentCpf = accountDTO.DependentCpf.Replace(".", "").Replace("-", "").Trim();
+            accountDTO.OwnerCpf = accountDTO.OwnerCpf.Replace(".", "").Replace("-", "").Trim();
+            accountDTO.DependentCpf = accountDTO.DependentCpf.Replace(".", "").Replace("-", "").Trim();
             try
             {
                 // Get customer owner
-                if (accountDTO.OwnerCpf != String.Empty || accountDTO.OwnerCpf != null)
+                if (accountDTO.OwnerCpf != String.Empty && accountDTO.OwnerCpf != null)
                 {
                     var response = await _httpClient.GetAsync($"https://localhost:7147/api/Customers/{accountDTO.OwnerCpf}");
                     if (response.IsSuccessStatusCode)
@@ -299,12 +299,7 @@ namespace AccountAPI.Services
                         customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
                         if (customer != null)
                         {
-                            listCustomers.Add(new AgencyCustomerDTO
-                            {
-                                Cpf = customer.Cpf,
-                                DtBirth = customer.DtBirth,
-                                Restriction = customer.Restriction
-                            });
+                            listCustomers.Add(customer);
                         }
                     }
                     // Ger customer dependent
@@ -317,12 +312,7 @@ namespace AccountAPI.Services
                             customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
                             if (customer != null)
                             {
-                                listCustomers.Add(new AgencyCustomerDTO
-                                {
-                                    Cpf = customer.Cpf,
-                                    DtBirth = customer.DtBirth,
-                                    Restriction = customer.Restriction
-                                });
+                                listCustomers.Add(customer);
                             }
                         }
                     }
@@ -339,47 +329,29 @@ namespace AccountAPI.Services
             return listCustomers;
         }
 
-        public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<AgencyCustomerDTO> customers, EProfile profile)
+        public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<Customer> customers, EProfile profile)
         {
             var allAccounts = await BuildList();
             var currentNumbers = allAccounts.Select(x => x.Number).ToList();
 
             #region Validate if account number already exists
-            string accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
-
+            string accountNumber = String.Empty;
             do
             {
                 accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
             } while (currentNumbers.Contains(accountNumber));
             #endregion
 
-            /*
-            // GET Customers
-            //accountDTO.OwnerCpf;
-            List<AgencyCustomerDTO> customers = new List<AgencyCustomerDTO>();
-            customers.Add(new AgencyCustomerDTO
+            List<AgencyCustomerDTO>? listCustomers = new List<AgencyCustomerDTO>();
+            foreach (var customer in customers)
             {
-                Cpf = "555.666.888-99",
-                DtBirth = new DateTime(1990, 10, 5),
-                Restriction = false
-            });
-            //accountDTO.DependentCpf;
-            customers.Add(new AgencyCustomerDTO
-            {
-                Cpf = "444.777.222-00",
-                DtBirth = new DateTime(2014, 2, 10),
-                Restriction = false
-            });
-            
-
-            // GET Agency
-            //accountDTO.Agency;
-            AccountAgencyDTO agency = new AccountAgencyDTO
-            {
-                Number = "0064",
-                Restriction = false,
+                listCustomers.Add(new AgencyCustomerDTO
+                {
+                    Cpf = customer.Cpf,
+                    DtBirth = customer.DtBirth,
+                    Restriction = customer.Restriction
+                });
             };
-            */
 
             // GET Overdraft
             double overdraft = 0;
@@ -402,9 +374,8 @@ namespace AccountAPI.Services
                 Agency = agency,
                 Number = accountNumber,
                 Date = DateTime.Today,  // Default
-                //Profile = EProfile.Normal,
                 Profile = profile,
-                Customers = customers,
+                Customers = listCustomers,
                 Overdraft = overdraft,
                 Balance = 0,            // Default 
                 Restriction = true,     // Restricted until manager approves
