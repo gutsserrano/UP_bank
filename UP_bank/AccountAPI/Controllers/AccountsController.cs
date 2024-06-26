@@ -72,9 +72,12 @@ namespace AccountAPI.Controllers
 
                 var agency = await _accountService.GetAgency(accountDTO);       // Get Agency DTO Api
                 if (agency == null) return NotFound("Agency not found!");
+                if (!agency.Restriction) return BadRequest("Agency is restricted!");
 
                 var customers = await _accountService.GetCustomer(accountDTO);  // Get List Customers DTO Api
                 if (customers == null) return NotFound("Customers not found!");
+                if (!customers[0].Restriction) return BadRequest("Account Owner Cpf is restricted!");
+
 
                 var account = await _accountService.CreateNewAccount(accountDTO, agency, customers, profile);    // Create Account
 
