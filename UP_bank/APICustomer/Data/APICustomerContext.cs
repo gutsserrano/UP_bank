@@ -13,7 +13,13 @@ namespace APICustomer.Data
             : base(options)
         {
         }
+        public DbSet<Models.Customer> Customer { get; set; }
+        public DbSet<CustomerDelete> CustomerDelete { get; set; }
 
-        public DbSet<Models.Customer> Customer { get; set; } = default!;
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<CustomerDelete>().ToTable("CustomerDelete");
+        }
     }
 }
