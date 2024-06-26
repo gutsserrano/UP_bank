@@ -20,7 +20,7 @@ namespace Services.AgencyServices
 
             foreach (var item in agencyEmployees)
             {
-                var correctCpf = RemoveMask(item.Cpf);
+                var correctCpf = RemoveCpfMask(item.Cpf);
                 string employeesApiUrl = $"https://localhost:7106/api/Employees/{correctCpf}";
                 response = await _client.GetAsync(employeesApiUrl);
 
@@ -35,73 +35,132 @@ namespace Services.AgencyServices
                 return null;
 
             return employees;
-
-            // Este método deve buscar os funcionarios cadastrados a partir da lista de cpf passados como argumento
-            /* Random random = new Random();
-             int count = random.Next(1, 6);
-
-             List<Employee> employees = new List<Employee>();
-             for(int i = 0; i < count; i++)
-             {
-                 employees.Add(GenerateRandomEmployee());
-             }
-
-             return employees;*/
         }
 
-        public static string RemoveMask(string cpf)
+        public async Task<Employee> GetEmployee(string cpf)
+        {
+            Employee? employee = new();
+            HttpResponseMessage response = new();
+
+            var correctCpf = RemoveCpfMask(cpf);
+            string employeesApiUrl = $"https://localhost:7106/api/Employees/{correctCpf}";
+            response = await _client.GetAsync(employeesApiUrl);
+
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            employee = JsonConvert.DeserializeObject<Employee>(jsonResponse);
+            
+
+            if ((int)response.StatusCode == 404)
+                return null;
+
+            if (employee == null)
+                return null;
+
+            return employee;
+        }
+
+        public string RemoveCpfMask(string cpf)
         {
             cpf = cpf.Replace(".", "");
             cpf = cpf.Replace("-", "");
             return cpf;
         }
 
-        public static string InsertMask(string cpf)
+        public string InsertCpfMask(string cpf)
         {
             return Convert.ToUInt64(cpf).ToString(@"000\.000\.000\-00");
         }
 
-        public async Task<Address> GetAddress(string zipCode, string number)
+        public string RemoveCnpjMask(string cnpj)
         {
-            // Este método deve buscar o endereço cadastrado a partir do cep e número passados como argumento
-            return GenerateRandomAddress();
+            cnpj = cnpj.Replace(".", "");
+            cnpj = cnpj.Replace("/", "");
+            cnpj = cnpj.Replace("-", "");
+            return cnpj;
         }
 
-        private Employee GenerateRandomEmployee()
+        public string InsertCnpjMask(string cnpj)
         {
-            Address address = GenerateRandomAddress();
-            Random random = new Random();
-
-            return new Employee()
-            {
-                Name = "Funcionario " + random.Next(1, 100),
-                Cpf = random.Next(100000000, 999999999).ToString(),
-                DtBirth = DateTime.Now,
-                Sex = random.Next(0, 2) == 1 ? 'M' : 'F',
-                Income = random.Next(1000, 10000),
-                Phone = random.Next(100000000, 999999999).ToString(),
-                Email = "funcionario" + random.Next(1, 100) + "@upbank.com",
-                Address = address,
-                AddressZipCode = address.ZipCode,
-                AddressNumber = address.Number,
-                Manager = random.Next(0, 2) == 1,
-                Register = random.Next(1, 999)
-            };
+            return Convert.ToUInt64(cnpj).ToString(@"00\.000\.000\/0000\-00");
         }
 
-        private Address GenerateRandomAddress()
+        public bool VerifyCnpj(string cnpj)
         {
-            Random random = new Random();
-
-            return new Address()
+            if (cnpj.Contains(".") || cnpj.Contains("/") || cnpj.Contains("-"))
             {
-                Street = "Rua " + random.Next(1, 100),
-                Number = random.Next(1, 1000).ToString(),
-                Complement = "Complemento " + random.Next(1, 100),
-                City = "Cidade " + random.Next(1, 100),
-                State = "Estado " + random.Next(1, 100),
-                ZipCode = random.Next(10000000, 99999999).ToString()
-            };
+                cnpj = cnpj.Replace(".", "");
+                cnpj = cnpj.Replace("/", "");
+                cnpj = cnpj.Replace("-", "");
+            }
+
+            if (cnpj.Length != 14)
+            {
+                return false;
+            }
+
+            bool valido = false;
+            for (int i = 0; i < cnpj.Length - 1 && !valido; i++)
+            {
+                int n1 = int.Parse(cnpj.Substring(i, 1));
+                int n2 = int.Parse(cnpj.Substring(i + 1, 1));
+
+                if (n1 != n2)
+                {
+                    valido = true;
+                }
+            }
+
+            return valido && ValidateFirstDigit(cnpj) && ValidateSecondDigit(cnpj);
+        }
+
+        private bool ValidateFirstDigit(string str)
+        {
+            int result = 0;
+            int[] verifier = { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+            for (int i = 0; i < 12; i++)
+            {
+                int digit = int.Parse(str.Substring(i, 1));
+                result += digit * verifier[i];
+            }
+
+            int rest = result % 11;
+            int firstDigit = int.Parse(str.Substring(12, 1));
+
+            if ((rest == 0 || rest == 1) && firstDigit == 0)
+            {
+                return true;
+            }
+            else if ((rest >= 2 && rest <= 10) && firstDigit == 11 - rest)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ValidateSecondDigit(string cnpj)
+        {
+            int result = 0;
+            int[] verifier = { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+            for (int i = 0; i < 13; i++)
+            {
+                int digit = int.Parse(cnpj.Substring(i, 1));
+                result += digit * verifier[i];
+            }
+
+            int rest = result % 11;
+            int secondDigit = int.Parse(cnpj.Substring(13, 1));
+
+            if ((rest == 0 || rest == 1) && secondDigit == 0)
+            {
+                return true;
+            }
+            else if ((rest >= 2 && rest <= 10) && secondDigit == 11 - rest)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

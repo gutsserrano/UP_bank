@@ -32,21 +32,100 @@ namespace UPBank.AgencyAPI.Controllers
 
         // GET: api/Agencies
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Agency>>> GetAgency()
+        public async Task<ActionResult<IEnumerable<Agency>>> GetAgency(bool deleted = false)
         {
-            if (_context.Agency == null)
+            if (!deleted)
             {
-                return NotFound();
+                if (_context.Agency == null)
+                {
+                    return NotFound();
+                }
+
+                List<Agency> agencies = await _context.Agency.ToListAsync();
+
+                foreach (var item in agencies)
+                {
+                    Address? address = _addressService.GetAddress(new AddressDTO()
+                    {
+                        ZipCode = item.AddressZipCode,
+                        Number = item.AddressNumber
+                    }).Result;
+
+                    if (address == null)
+                    {
+                        return NotFound("Address not found.");
+                    }
+
+                    item.Address = address;
+
+                    item.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == item.Number).ToList();
+
+                    item.Employees = _agencyService.GetEmployees(item.EmployeesCpf).Result;
+                }
+
+                return agencies;
             }
-
-            List<Agency> agencies = await _context.Agency.ToListAsync();
-
-            foreach (var item in agencies)
+            else
             {
+                if (_context.DeletedAgency == null)
+                {
+                    return NotFound();
+                }
+
+                List<DeletedAgency> agencies = await _context.DeletedAgency.ToListAsync();
+
+                foreach (var item in agencies)
+                {
+                    Address? address = _addressService.GetAddress(new AddressDTO()
+                    {
+                        ZipCode = item.AddressZipCode,
+                        Number = item.AddressNumber
+                    }).Result;
+
+                    if (address == null)
+                    {
+                        return NotFound("Address not found.");
+                    }
+
+                    item.Address = address;
+
+                    item.EmployeesCpf = _context.DeletedAgencyEmployee.Where(ae => ae.DeletedAgencyNumber == item.Number).ToList();
+
+                    List<AgencyEmployee> agencyEmployees = new();
+                    foreach (var e in item.EmployeesCpf)
+                    {
+                        agencyEmployees.Add(new AgencyEmployee(e));
+                    }
+
+                    item.Employees = _agencyService.GetEmployees(agencyEmployees).Result;
+                }
+
+                return agencies.Select(a => new Agency(a)).ToList();
+            }
+        }
+
+        // GET: api/Agencies/5
+        [HttpGet("{number}")]
+        public async Task<ActionResult<Agency>> GetAgency(string number, bool deleted = false)
+        {
+            if (!deleted)
+            {
+                if (_context.Agency == null)
+                {
+                    return NotFound();
+                }
+
+                var agency = await _context.Agency.FindAsync(number);
+
+                if(agency == null)
+                {
+                    return NotFound();
+                }
+
                 Address? address = _addressService.GetAddress(new AddressDTO()
                 {
-                    ZipCode = item.AddressZipCode,
-                    Number = item.AddressNumber
+                    ZipCode = agency.AddressZipCode,
+                    Number = agency.AddressNumber
                 }).Result;
 
                 if (address == null)
@@ -54,20 +133,100 @@ namespace UPBank.AgencyAPI.Controllers
                     return NotFound("Address not found.");
                 }
 
-                item.Address = address;
+                agency.Address = address;
 
-                item.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == item.Number).ToList();
+                agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
 
-                item.Employees = _agencyService.GetEmployees(item.EmployeesCpf).Result;
+                agency.Employees = _agencyService.GetEmployees(agency.EmployeesCpf).Result;
+
+                if (agency == null)
+                {
+                    return NotFound();
+                }
+
+                return agency;
             }
+            else
+            {
+                if (_context.DeletedAgency == null)
+                {
+                    return NotFound();
+                }
 
-            return agencies;
+                var agency = await _context.DeletedAgency.FindAsync(number);
+
+                if (agency == null)
+                {
+                    return NotFound();
+                }
+
+                Address? address = _addressService.GetAddress(new AddressDTO()
+                {
+                    ZipCode = agency.AddressZipCode,
+                    Number = agency.AddressNumber
+                }).Result;
+
+                if (address == null)
+                {
+                    return NotFound("Address not found.");
+                }
+
+                agency.Address = address;
+
+                agency.EmployeesCpf = _context.DeletedAgencyEmployee.Where(ae => ae.DeletedAgencyNumber == number).ToList();
+
+                List<AgencyEmployee> agencyEmployees = new();
+                foreach (var item in agency.EmployeesCpf)
+                {
+                    agencyEmployees.Add(new AgencyEmployee(item));
+                }
+
+                agency.Employees = _agencyService.GetEmployees(agencyEmployees).Result;
+
+                if (agency == null)
+                {
+                    return NotFound();
+                }
+
+                return new Agency(agency);
+            }
         }
 
-        // GET: api/Agencies/5
-        [HttpGet("{number}")]
-        public async Task<ActionResult<Agency>> GetAgency(string number, bool deleted = false)
+        [HttpGet("employee/{cpf}")]
+        public async Task<ActionResult<Agency>> GetAgencyByEmployee(string cpf)
         {
+            if (_context.AgencyEmployee == null)
+            {
+                return NotFound();
+            }
+
+            if (cpf.Length != 11)
+            {
+                return BadRequest("Invalid Cpf.");
+            }
+
+            cpf = _agencyService.InsertCpfMask(cpf);
+
+            AgencyEmployee agencyEmployee = _context.AgencyEmployee.Find(cpf);
+
+            if (agencyEmployee == null)
+            {
+                return NotFound();
+            }
+
+            return GetAgency(agencyEmployee.AgencyNumber).Result;
+        }
+
+        // PUT: api/Agencies/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{number}")]
+        public async Task<IActionResult> PutAgency(string number, AgencyUpdateDTO agencyUpdateDTO)
+        {
+            if (number != agencyUpdateDTO.Number)
+            {
+                return BadRequest();
+            }
+
             if (_context.Agency == null)
             {
                 return NotFound();
@@ -75,40 +234,12 @@ namespace UPBank.AgencyAPI.Controllers
 
             var agency = await _context.Agency.FindAsync(number);
 
-            Address? address = _addressService.GetAddress(new AddressDTO()
-            {
-                ZipCode = agency.AddressZipCode,
-                Number = agency.AddressNumber
-            }).Result;
-
-            if (address == null)
-            {
-                return NotFound("Address not found.");
-            }
-
-            agency.Address = address;
-
-            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
-
-            agency.Employees = _agencyService.GetEmployees(agency.EmployeesCpf).Result;
-
-            if (agency == null)
+            if(agency == null)
             {
                 return NotFound();
             }
 
-            return agency;
-        }
-
-        // PUT: api/Agencies/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAgency(string id, Agency agency)
-        {
-            if (id != agency.Number)
-            {
-                return BadRequest();
-            }
+            agency.Restriction = agencyUpdateDTO.Restriction;
 
             _context.Entry(agency).State = EntityState.Modified;
 
@@ -118,7 +249,7 @@ namespace UPBank.AgencyAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AgencyExists(id))
+                if (!AgencyExists(number))
                 {
                     return NotFound();
                 }
@@ -129,6 +260,72 @@ namespace UPBank.AgencyAPI.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpPut("addEmployee/{cpf}/agency/{agencyNumber}")]
+        public async Task<ActionResult<Agency>> AddEmployee(string agencyNumber, string cpf)
+        {
+            if (_context.Agency == null)
+            {
+                return NotFound();
+            }
+
+            var agency = await _context.Agency.FindAsync(agencyNumber);
+
+            if (agency == null)
+            {
+                return NotFound();
+            }
+
+            if (cpf.Length != 11)
+            {
+                return BadRequest("Invalid Cpf.");
+            }
+
+            cpf = _agencyService.InsertCpfMask(cpf);
+
+            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == agencyNumber).ToList();
+
+            if (agency.EmployeesCpf.Any(e => e.Cpf == cpf))
+            {
+                return BadRequest("Employee already exists in this agency.");
+            }
+
+            agency.Employees = _agencyService.GetEmployees(agency.EmployeesCpf).Result;
+
+            Employee employee = _agencyService.GetEmployee(cpf).Result;
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            agency.Employees.Add(employee);
+
+            agency.EmployeesCpf.Add(new AgencyEmployee()
+            {
+                Cpf = cpf
+            });
+
+            _context.Entry(agency).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AgencyExists(agencyNumber))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return agency;
         }
 
         // POST: api/Agencies
@@ -144,23 +341,44 @@ namespace UPBank.AgencyAPI.Controllers
             List<AgencyEmployee> agencyEmployees = new();
             foreach(var item in agencyDTO.EmployeesCpf)
             {
-                agencyEmployees.Add(new AgencyEmployee()
+                AgencyEmployee ae = new AgencyEmployee()
                 {
                     Cpf = item
-                });
+                };
+
+                if(_context.AgencyEmployee.Any(ae => ae.Cpf == item) || _context.DeletedAgencyEmployee.Any(ae => ae.Cpf == item))
+                {
+                    return BadRequest($"Employee {item} already exists in another agency.");
+                }
+
+                agencyEmployees.Add(ae);
             }
 
             List <Employee> employees = _agencyService.GetEmployees(agencyEmployees).Result;
+
+            if(employees == null)
+            {
+                return NotFound("Employees not found.");
+            }
 
             if (!employees.Any(e => e.Manager))
             {
                 return BadRequest("The agency must contains at least one Manager");
             }
 
+            string cnpjMask = _agencyService.RemoveCnpjMask(agencyDTO.Cnpj);
+
+            if (!_agencyService.VerifyCnpj(cnpjMask))
+            {
+                return BadRequest("Invalid Cnpj.");
+            }
+
+            cnpjMask = _agencyService.InsertCnpjMask(cnpjMask);
+
             var agency = new Agency
             {
                 Number = agencyDTO.Number,
-                Cnpj = agencyDTO.Cnpj,
+                Cnpj = cnpjMask,
                 Restriction = agencyDTO.Restriction,
                 Employees = employees,
                 EmployeesCpf = agencyEmployees,
@@ -212,36 +430,6 @@ namespace UPBank.AgencyAPI.Controllers
             return CreatedAtAction("GetAgency", new { id = agency.Number }, agency);
         }
 
-        // DELETE: api/Agencies/5
-        [HttpDelete("{number}")]
-        public async Task<IActionResult> DeleteAgency(string number)
-        {
-            if (_context.Agency == null)
-            {
-                return NotFound();
-            }
-            var agency = await _context.Agency.FindAsync(number);
-            if (agency == null)
-            {
-                return NotFound();
-            }
-
-            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
-
-            _context.DeletedAgency.Add(new DeletedAgency(agency));
-
-            foreach(var item in agency.EmployeesCpf)
-            {
-                _context.AgencyEmployee.Remove(item);
-            }
-
-            _context.Agency.Remove(agency);
-
-            await _context.SaveChangesAsync();
-
-            return Ok("Agency deleted.");
-        }
-
         [HttpPost("restore/{number}")]
         public async Task<ActionResult<DeletedAgency>> RestoreAgency(string number)
         {
@@ -273,6 +461,106 @@ namespace UPBank.AgencyAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Agency restored.");
+        }
+
+        // DELETE: api/Agencies/5
+        [HttpDelete("{number}")]
+        public async Task<IActionResult> DeleteAgency(string number)
+        {
+            if (_context.Agency == null)
+            {
+                return NotFound();
+            }
+            var agency = await _context.Agency.FindAsync(number);
+            if (agency == null)
+            {
+                return NotFound();
+            }
+
+            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
+
+            _context.DeletedAgency.Add(new DeletedAgency(agency));
+
+            foreach(var item in agency.EmployeesCpf)
+            {
+                _context.AgencyEmployee.Remove(item);
+            }
+
+            _context.Agency.Remove(agency);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Agency deleted.");
+        }
+
+        [HttpDelete("removeEmployee/{cpf}/agency/{agencyNumber}")]
+        public async Task<ActionResult<Agency>> RemoveEmployee(string agencyNumber, string cpf)
+        {
+            if (_context.Agency == null)
+            {
+                return NotFound();
+            }
+
+            var agency = await _context.Agency.FindAsync(agencyNumber);
+
+            if (agency == null)
+            {
+                return NotFound();
+            }
+
+            if (cpf.Length != 11)
+            {
+                return BadRequest("Invalid Cpf.");
+            }
+
+            cpf = _agencyService.InsertCpfMask(cpf);
+
+            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == agencyNumber).ToList();
+
+            if (!agency.EmployeesCpf.Any(e => e.Cpf == cpf))
+            {
+                return BadRequest("Employee does not exist in this agency.");
+            }
+
+            agency.Employees = _agencyService.GetEmployees(agency.EmployeesCpf).Result;
+
+            Employee employee = _agencyService.GetEmployee(cpf).Result;
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            if(employee.Manager && agency.Employees.Count(e => e.Manager) == 1)
+            {
+                return BadRequest("The agency must contains at least one Manager");
+            }
+
+            agency.Employees.Remove(employee);
+
+            var employeeToRemove = agency.EmployeesCpf.FirstOrDefault(e => e.Cpf == cpf);
+
+            agency.EmployeesCpf.Remove(employeeToRemove);
+
+            _context.Entry(agency).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AgencyExists(agencyNumber))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return await GetAgency(agency.Number, false);
         }
 
         private bool AgencyExists(string number)
