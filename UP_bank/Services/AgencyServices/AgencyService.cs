@@ -1,4 +1,6 @@
 ﻿using Models;
+using Models.DTO;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,19 +11,54 @@ namespace Services.AgencyServices
 {
     public class AgencyService
     {
+        private readonly HttpClient _client = new HttpClient();
+
         public async Task<List<Employee>> GetEmployees(List<AgencyEmployee> agencyEmployees)
         {
-            // Este método deve buscar os funcionarios cadastrados a partir da lista de cpf passados como argumento
-            Random random = new Random();
-            int count = random.Next(1, 6);
+            List<Employee>? employees = new();
+            HttpResponseMessage response = new();
 
-            List<Employee> employees = new List<Employee>();
-            for(int i = 0; i < count; i++)
+            foreach (var item in agencyEmployees)
             {
-                employees.Add(GenerateRandomEmployee());
+                var correctCpf = RemoveMask(item.Cpf);
+                string employeesApiUrl = $"https://localhost:7106/api/Employees/{correctCpf}";
+                response = await _client.GetAsync(employeesApiUrl);
+
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                employees.Add(JsonConvert.DeserializeObject<Employee>(jsonResponse));
             }
 
+            if ((int)response.StatusCode == 404)
+                return null;
+
+            if (employees == null)
+                return null;
+
             return employees;
+
+            // Este método deve buscar os funcionarios cadastrados a partir da lista de cpf passados como argumento
+            /* Random random = new Random();
+             int count = random.Next(1, 6);
+
+             List<Employee> employees = new List<Employee>();
+             for(int i = 0; i < count; i++)
+             {
+                 employees.Add(GenerateRandomEmployee());
+             }
+
+             return employees;*/
+        }
+
+        public static string RemoveMask(string cpf)
+        {
+            cpf = cpf.Replace(".", "");
+            cpf = cpf.Replace("-", "");
+            return cpf;
+        }
+
+        public static string InsertMask(string cpf)
+        {
+            return Convert.ToUInt64(cpf).ToString(@"000\.000\.000\-00");
         }
 
         public async Task<Address> GetAddress(string zipCode, string number)

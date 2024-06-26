@@ -14,7 +14,7 @@ namespace Models.DTO
         public string Number { get; set; }
         [StringLength(19)]
         public string Cnpj { get; set; }
-        public List<AgencyEmployee> EmployeesCpf { get; set; } = new List<AgencyEmployee>();
+        public List<string> EmployeesCpf { get; set; } = new List<string>();
         public bool Restriction { get; set; }
         public AddressDTO AddressDTO { get; set; }
     }

@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.DTO;
+using NuGet.Versioning;
 using Services.AddressApiServices;
 using Services.AgencyServices;
 using UPBank.AgencyAPI.Data;
+using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
 namespace UPBank.AgencyAPI.Controllers
 {
@@ -53,23 +55,25 @@ namespace UPBank.AgencyAPI.Controllers
                 }
 
                 item.Address = address;
-            }
 
-            // Fazer a mesma busca com a lista de funcionarios quando a API estiver funcionando completamente
+                item.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == item.Number).ToList();
+
+                item.Employees = _agencyService.GetEmployees(item.EmployeesCpf).Result;
+            }
 
             return agencies;
         }
 
         // GET: api/Agencies/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Agency>> GetAgency(string id)
+        [HttpGet("{number}")]
+        public async Task<ActionResult<Agency>> GetAgency(string number, bool deleted = false)
         {
             if (_context.Agency == null)
             {
                 return NotFound();
             }
 
-            var agency = await _context.Agency.FindAsync(id);
+            var agency = await _context.Agency.FindAsync(number);
 
             Address? address = _addressService.GetAddress(new AddressDTO()
             {
@@ -83,6 +87,10 @@ namespace UPBank.AgencyAPI.Controllers
             }
 
             agency.Address = address;
+
+            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
+
+            agency.Employees = _agencyService.GetEmployees(agency.EmployeesCpf).Result;
 
             if (agency == null)
             {
@@ -133,17 +141,16 @@ namespace UPBank.AgencyAPI.Controllers
                 return Problem("Entity set 'UPBankAgencyAPIContext.Agency'  is null.");
             }
 
-            List <Employee> employees = _agencyService.GetEmployees(agencyDTO.EmployeesCpf).Result;
-
-            // Populando o agencyEmployees apenas enquanto o método GetEmployees não é implementado
-            List<AgencyEmployee> agencyEmployees = agencyDTO.EmployeesCpf;
-            foreach (var item in employees)
+            List<AgencyEmployee> agencyEmployees = new();
+            foreach(var item in agencyDTO.EmployeesCpf)
             {
-                agencyEmployees.Add(new AgencyEmployee
+                agencyEmployees.Add(new AgencyEmployee()
                 {
-                    Cpf = item.Cpf
+                    Cpf = item
                 });
             }
+
+            List <Employee> employees = _agencyService.GetEmployees(agencyEmployees).Result;
 
             if (!employees.Any(e => e.Manager))
             {
@@ -218,16 +225,54 @@ namespace UPBank.AgencyAPI.Controllers
             {
                 return NotFound();
             }
-            
+
+            agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
+
             _context.DeletedAgency.Add(new DeletedAgency(agency));
 
-            _context.AgencyEmployee.RemoveRange(agency.EmployeesCpf);
+            foreach(var item in agency.EmployeesCpf)
+            {
+                _context.AgencyEmployee.Remove(item);
+            }
 
             _context.Agency.Remove(agency);
 
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Agency deleted.");
+        }
+
+        [HttpPost("restore/{number}")]
+        public async Task<ActionResult<DeletedAgency>> RestoreAgency(string number)
+        {
+            if (_context.DeletedAgency == null)
+            {
+                return NotFound();
+            }
+
+            var deletedAgency = await _context.DeletedAgency.FindAsync(number);
+
+            if (deletedAgency == null)
+            {
+                return NotFound();
+            }
+
+            List<DeletedAgencyEmployee> deletedAgencyEmployees = new();
+
+            deletedAgency.EmployeesCpf = _context.DeletedAgencyEmployee.Where(ae => ae.DeletedAgencyNumber == number).ToList();
+
+            _context.Agency.Add(new Agency(deletedAgency));
+
+            foreach (var item in deletedAgency.EmployeesCpf)
+            {
+                _context.DeletedAgencyEmployee.Remove(item);
+            }
+
+            _context.DeletedAgency.Remove(deletedAgency);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Agency restored.");
         }
 
         private bool AgencyExists(string number)

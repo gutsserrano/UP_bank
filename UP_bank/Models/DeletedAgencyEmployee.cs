@@ -12,6 +12,7 @@ namespace Models
         [Key]
         [StringLength(14)]
         public string Cpf { get; set; }
+        public string DeletedAgencyNumber { get; set; }
 
         public DeletedAgencyEmployee()
         {
