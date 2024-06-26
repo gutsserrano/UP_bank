@@ -443,3 +443,159 @@ podem ser bloqueadas novamente.
     ```
 
     
+
+## Conta
+
+
+### 1. Criar Conta
+- **Endpoint**: `POST: api/accounts`
+- **Descrição**: Cria uma nova conta.
+- **Parâmetros**: Nenhum.
+- **Exemplo de Envio**:
+  ```json
+{
+    "Agency" : "777",
+    "OwnerCpf" : "811.201.240-77",
+    "DependentCPF" : "",
+    "Profile" : "Normal"
+}
+  ```
+
+Account GET
+https://localhost:7244/api/accounts/account/0727?deleted=false
+onde 0727 é o numero da conta e parâmetro 
+deleted false ou true para pegar da coleção especifica
+
+
+Account GET ALL ACCOUNTS
+https://localhost:7244/api/accounts/getAllAccounts
+traz todas as contas (excluidas e nao excluidas)
+
+
+Account GET ALL
+https://localhost:7244/api/accounts/type/0/?deleted=false
+onde 0 = parâmetro para:
+0 - Todas as contas 
+1 - Contas Restritas
+2 - Contas com Empréstimo
+e parâmetro deleted true ou false
+
+
+Account GET ALL Profile
+https://localhost:7244/api/accounts/profile/1?deleted=false
+onde 1 = parâmetro perfil para:
+0 - Universitário
+1 - Normal
+2 - Vip
+e parâmetro deleted true ou false
+
+
+Account GET CHECKBALANCE
+https://localhost:7244/api/accounts/checkBalance/account/0727
+onde 0727 = número da conta para exibir o saldo da conta
+
+
+Account CLOSE (DELETE)
+https://localhost:7244/api/accounts/close-account/account/0727
+onde 0727 = número da conta para exclui-la
+
+
+Account RESTORE (POST)
+https://localhost:7244/api/accounts/restore/0727
+onde 0727 = número da conta para restaura-la
+
+
+Transaction POST NEW TRANSACTION
+https://localhost:7244/api/transactions/account/0727
+onde 0727 = número da conta para efetuar transação
+dto:
+{
+    "type": 0 ,
+    //"AccountDestinyNumber": "0554",
+    "AccountDestinyNumber": "",
+    "price" : 100
+}
+
+Sendo Type:
+Withdrawal = 0, (Subtrai da conta)
+Loan = 1, 		(Adiciona para conta)
+Deposit = 2, 	(Adiciona para conta)
+Transfer = 3,	(Subtrai da conta) 
+Payment = 4		(Subtrai da conta)
+
+Toda trasação do tipo 3 deve ter um AccountDestinyNumber informado.
+Toda transação diferente do tipo 3 não deve ter informado AccountDestinyNumber.
+
+
+Transaction GET EXTRACT BY ID
+https://localhost:7244/api/transactions/account/0727/id/2
+onde 0727 = número da conta e id = 2 é o número da transação desejada
+
+Transaction GET EXTRACT BY TYPE
+https://localhost:7244/api/transactions/account/0727/type/0
+onde 0727 = número da conta e type = 0 é o tipo da transação desejada
+
+Transaction GET ALL
+https://localhost:7244/api/transactions/account/0727
+onde 0727 = número da conta para trazer todos os extratos
+
+CreditCard GET
+https://localhost:7244/api/creditcards/0727
+onde 0727 = número da conta para trazer os dados do cartão
+
+
+
+-- BRIDGE
+
+Account CLOSE BY AGENCY (DELETE)
+https://localhost:7244/api/accounts/close-account/agency/0064
+onde 0064 = número da agência para encerrar (exclui as contas vinculadas)
+
+Account RESTORE BY AGENCY (POST)
+https://localhost:7244/api/accounts/restore/agency/0064
+onde 0064 = número da agência para reabrir (restaura as contas vinculadas)
+
+Account AGENCY RESTRICTION CHANGE (PATCH)
+https://localhost:7244/api/accounts/agency/0064
+onde 0064 = número da agência para alterar restrição (atualiza as contas vinculadas)
+
+----
+
+Account CUSTOMER RESTRICTION CHANGE (PATCH)
+https://localhost:7244/api/accounts/customer/55566688899
+onde 55566688899 = cpf do cliente para atualizar nas contas vinculadas
+
+----
+
+Account PROFILE CHANGE (PATCH)
+https://localhost:7244/api/accounts/account/0727/profile/0
+onde 0727 = número da conta para mudar o perfil e profile = 0 para mudar o perfil
+sendo 0 - Universitário, 1 - Normal, 2 - Vip
+
+Account OVERDRAFT CHANGE (PATCH)
+https://localhost:7244/api/accounts/account/0727/overdraft/
+onde 0727 = número da conta para alterar o valor do Cheque Especial
+dto:
+{
+    "overdraft" : 1500
+}
+
+Account RESTRICTION CHANGE (PATCH)
+https://localhost:7244/api/accounts/account/0727
+onde 0727 = número da conta para mudar a restrição
+dto:
+{
+    "managerCpf" : "12345678910",
+    "restriction" : false
+}
+
+----
+
+Account UPDATE CREDITCARD ACTIVATE (PUT)
+https://localhost:7244/api/creditcards/0727
+onde 0727 = número da conta para ativar o cartão
+
+
+
+
+
