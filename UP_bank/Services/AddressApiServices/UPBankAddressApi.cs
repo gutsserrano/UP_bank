@@ -55,7 +55,7 @@ namespace Services.AddressApiServices
                 ZipCode = addressDTO.ZipCode,
                 Number = addressDTO.Number,
                 Street = viacepAddress.Street,
-                Complement = addressDTO.Complement,
+                Complement = viacepAddress.Complement,
                 City = viacepAddress.City,
                 State = viacepAddress.State
             };
