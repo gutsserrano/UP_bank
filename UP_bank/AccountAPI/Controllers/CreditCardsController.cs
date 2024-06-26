@@ -48,10 +48,10 @@ namespace AccountAPI.Controllers
         }
 
         [HttpPut("{accNumber}, {cardNumber}")]
-        // https://localhost:7244/api/creditcards/5725,4920566877197436 test
-        public async Task<ActionResult<CreditCard>> Active(string accNumber, long cardNumber)
+        // https://localhost:7244/api/creditcards/5725 test
+        public async Task<ActionResult<CreditCard>> Active(string accNumber)
         {
-            var creditCard = await _creditCardService.ActiveCard(accNumber, cardNumber);
+            var creditCard = await _creditCardService.ActiveCard(accNumber);
 
             return Ok(creditCard);
         }
