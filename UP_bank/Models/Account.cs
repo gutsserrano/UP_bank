@@ -13,16 +13,17 @@ namespace Models
 {
     public class Account
     {
-        [BsonId]
-        public string Number { get; set; }
         //public Agency Agency { get; set; }
         public AccountAgencyDTO Agency { get; set; }
+        [BsonId]
+        public string Number { get; set; }
         //public List<Customer> Customers { get; set; }
         public List<AgencyCustomerDTO> Customers { get; set; }
         public bool Restriction { get; set; }
         public CreditCard? CreditCard { get; set; }
         public double Overdraft { get; set; }
         [BsonRepresentation(BsonType.String)]         // Convert Enum to string in document
+        public string SavingsAccount { get; set; }
         public EProfile Profile { get; set; }
         public DateTime Date { get; set; }
         public double Balance { get; set; }
