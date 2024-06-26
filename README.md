@@ -35,6 +35,13 @@ Toda conta deverá ser liberada pelo gerente da agência. Até isso acontecer, a
 porém é inativa, não podendo fazer nenhum tipo de operação. Após aprovação, as contas
 podem ser bloqueadas novamente.
 
+# Documentação de Rotas Geradas via POSTMAN
+
+CustomerAPI - <a>https://documenter.getpostman.com/view/36518087/2sA3dskYaC</a> <br>
+EmployeeAPI - <a>https://documenter.getpostman.com/view/36397976/2sA3dskYeT</a> <br>
+AgencyAPI - <a>https://documenter.getpostman.com/view/36146850/2sA3dskYeU</a> <br>
+AccountAPI - <a>https://documenter.getpostman.com/view/36146769/2sA3dskYaA</a>
+
 # Documentação de Rotas
 
 ## Endereços
