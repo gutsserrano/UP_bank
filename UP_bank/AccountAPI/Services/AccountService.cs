@@ -338,10 +338,13 @@ namespace AccountAPI.Services
 
             #region Validate if account number already exists
             string accountNumber = String.Empty;
+            string savingsNumber = String.Empty;
             do
             {
                 accountNumber = new Random().Next(0, 1000).ToString().PadLeft(4, '0');
             } while (currentNumbers.Contains(accountNumber));
+
+            savingsNumber = accountNumber + "-" + new Random().Next(0, 100).ToString().PadLeft(2, '0');
             #endregion
 
             List<AgencyCustomerDTO>? listCustomers = new List<AgencyCustomerDTO>();
@@ -379,6 +382,7 @@ namespace AccountAPI.Services
                 Profile = profile,
                 Customers = listCustomers,
                 Overdraft = overdraft,
+                SavingsAccount = savingsNumber,
                 Balance = 0,            // Default 
                 Restriction = true,     // Restricted until manager approves
                 CreditCard = null,      // Default

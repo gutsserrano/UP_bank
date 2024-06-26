@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.DTO;
+using Newtonsoft.Json;
 using NuGet.Versioning;
 using Services.AddressApiServices;
 using Services.AgencyServices;
@@ -22,6 +24,7 @@ namespace UPBank.AgencyAPI.Controllers
         private readonly UPBankAgencyAPIContext _context;
         private IAddressApiService _addressService;
         private readonly AgencyService _agencyService;
+        private readonly HttpClient _httpClient = new HttpClient();
 
         public AgenciesController(UPBankAgencyAPIContext context, AgencyService agencyService, IAddressApiService addressService)
         {
@@ -217,6 +220,49 @@ namespace UPBank.AgencyAPI.Controllers
             return GetAgency(agencyEmployee.AgencyNumber).Result;
         }
 
+        [HttpGet("agencyNumber/{number}/allAccounts")]
+        public async Task<ActionResult<List<Account>>> GetAccounts(string number)
+        {
+            var response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/type/0").Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            List<Account> accountList = JsonConvert.DeserializeObject<List<Account>>(jsonResponse);
+
+            return accountList.Where(a => a.Agency.Number == number).ToList();
+        }
+
+        [HttpGet("agencyNumber/{number}/restrictedAccounts")]
+        public async Task<ActionResult<List<Account>>> GetRestrictedAccounts(string number)
+        {
+            var response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/type/1").Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            List<Account> accountList = JsonConvert.DeserializeObject<List<Account>>(jsonResponse);
+
+            return accountList.Where(a => a.Agency.Number == number).ToList();
+        }
+
+        [HttpGet("agencyNumber/{number}/accountsByProfile/{profile}")]
+        public async Task<ActionResult<List<Account>>> GetAccountsByPerfil(string number, int profile)
+        {
+            if (profile < 0 || profile > 2)
+                return BadRequest("Invalid profile.");
+
+            var response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/profile/{profile}").Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            List<Account> accountList = JsonConvert.DeserializeObject<List<Account>>(jsonResponse);
+
+            return accountList.Where(a => a.Agency.Number == number).ToList();
+        }
+
+        [HttpGet("agencyNumber/{number}/loanAccounts")]
+        public async Task<ActionResult<List<Account>>> GetloanAccounts(string number)
+        {
+            var response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/type/2").Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            List<Account> accountList = JsonConvert.DeserializeObject<List<Account>>(jsonResponse);
+
+            return accountList.Where(a => a.Agency.Number == number).ToList();
+        }
+
         // PUT: api/Agencies/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{number}")]
@@ -240,6 +286,14 @@ namespace UPBank.AgencyAPI.Controllers
             }
 
             agency.Restriction = agencyUpdateDTO.Restriction;
+
+            /*https://localhost:7244/api/accounts/agency/0064*/
+
+            AgencyRestrictionDTO restrictionDto = new AgencyRestrictionDTO { Restriction = agencyUpdateDTO.Restriction };
+
+            StringContent content = new(JsonConvert.SerializeObject(restrictionDto), Encoding.UTF8, "application/json");
+
+            var response = _httpClient.PatchAsync($"https://localhost:7244/api/accounts/agency/{number}", content).Result;
 
             _context.Entry(agency).State = EntityState.Modified;
 
@@ -450,6 +504,11 @@ namespace UPBank.AgencyAPI.Controllers
                 return NotFound();
             }
 
+            HttpResponseMessage response = new();
+
+            string restoreAccountsUri = $"https://localhost:7244/api/accounts/restore/agency/{number}";
+            response = await _httpClient.PostAsync(restoreAccountsUri, null);
+
             List<DeletedAgencyEmployee> deletedAgencyEmployees = new();
 
             deletedAgency.EmployeesCpf = _context.DeletedAgencyEmployee.Where(ae => ae.DeletedAgencyNumber == number).ToList();
@@ -481,6 +540,13 @@ namespace UPBank.AgencyAPI.Controllers
             {
                 return NotFound();
             }
+
+            /*https://localhost:7244/api/accounts/close-account/agency/0064*/
+
+            HttpResponseMessage response = new();
+
+            string deleteAccountsUri = $"https://localhost:7244/api/accounts/close-account/agency/{number}";
+            response = await _httpClient.DeleteAsync(deleteAccountsUri);
 
             agency.EmployeesCpf = _context.AgencyEmployee.Where(ae => ae.AgencyNumber == number).ToList();
 
