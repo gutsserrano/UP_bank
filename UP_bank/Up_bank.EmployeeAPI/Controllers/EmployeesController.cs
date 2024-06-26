@@ -50,7 +50,7 @@ namespace Up_bank.EmployeeAPI.Controllers
 
         // GET: api/Employees/5
         [HttpGet("{cpf}")]
-        public async Task<ActionResult<Object>> GetEmployee(string cpf)
+        public async Task<ActionResult<Object>> GetEmployee(string cpf, bool deleted = false)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
             else if (cpf.Count() == 14 ) { return BadRequest("Insert the CPF without any formatting in the URL."); }
@@ -62,9 +62,10 @@ namespace Up_bank.EmployeeAPI.Controllers
                 return NotFound();
             }
 
-            
-            Employee employee = await _context.Employee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
-            
+            Employee employee = await _context.Employee.Where(e => e.Cpf == cpf).FirstOrDefaultAsync();
+
+            DeletedEmployee deletedEmployee = await _context.DeletedEmployee.Where(de => de.Cpf == cpf).FirstOrDefaultAsync();
+
             if (EmployeeExists(cpf) == true)
             {
                 if (employee == null)
@@ -77,6 +78,13 @@ namespace Up_bank.EmployeeAPI.Controllers
                 return employee;
             }
             
+            else if (DeletedEmployeeExists(cpf) == true && deleted)
+            {
+                Address address = await _employeeService.GetAddress(deletedEmployee.AddressZipCode, deletedEmployee.AddressNumber);
+                deletedEmployee.Address = address;
+                return deletedEmployee;
+            }
+
             else { return NotFound(); }
         }
 
@@ -187,7 +195,7 @@ namespace Up_bank.EmployeeAPI.Controllers
         private bool DeletedEmployeeExists(string cpf)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
-            return (_context.Employee?.Any(de => de.Cpf == cpf)).GetValueOrDefault();
+            return (_context.DeletedEmployee?.Any(de => de.Cpf == cpf)).GetValueOrDefault();
         }
 
         public static string RemoveMask(string cpf)
