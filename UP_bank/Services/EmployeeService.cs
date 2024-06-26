@@ -176,15 +176,22 @@ namespace Services
                 StringContent content = new(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
 
                 var response = _httpClient.PatchAsync($"https://localhost:7244/api/accounts/account/{accNumber}", content).Result;
-                if ((int) response.StatusCode == 200)
+                if ((int)response.StatusCode == 200)
                 {
                     account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
                 }
+                if ((int)response.StatusCode == 500)
+                {
+                    throw new ArgumentException("Account is already in restriction status informed!");
+                }
+                else
+                {
+                    throw new ArgumentException(response.ToString());
+                }
 
             }
-            catch (Exception)
+            catch
             {
-
                 throw;
             }
 

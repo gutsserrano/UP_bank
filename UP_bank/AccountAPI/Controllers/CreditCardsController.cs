@@ -51,9 +51,15 @@ namespace AccountAPI.Controllers
         // https://localhost:7244/api/creditcards/5725 test
         public async Task<ActionResult<CreditCard>> Active(string accNumber)
         {
-            var creditCard = await _creditCardService.ActiveCard(accNumber);
-
-            return Ok(creditCard);
+            try
+            {
+                var creditCard = await _creditCardService.ActiveCard(accNumber);
+                return Ok(creditCard);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
     }
 }

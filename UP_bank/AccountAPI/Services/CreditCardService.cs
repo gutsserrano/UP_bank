@@ -37,26 +37,6 @@ namespace AccountAPI.Services
             CreditCard creditCard;
             bool ok = false;
             var cpfs = account.Customers.Select(c => c.Cpf).ToList();
-            /*List<Customer> customers = new List<Customer>();
-
-            for (int i = 0; i < cpfs.Count; i++)
-            {
-                try
-                {
-                    var response = _httpClient.GetAsync($"https://localhost:7147/api/Customers/{cpfs[i]}").Result;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
-                        customers.Add(customer);
-                    }
-
-                }
-                catch (Exception)
-                {
-
-                    throw;
-                }
-            }*/
 
             do
             {
@@ -74,30 +54,32 @@ namespace AccountAPI.Services
         }
         public async Task<CreditCard> ActiveCard(string account)
         {
+            try
+            {
+                var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
 
-           var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
-            
 
-            if (acc == null)
-                throw new ArgumentException("Account or card not found!");
+                if (acc == null)
+                    throw new ArgumentException("Account or card not found!");
 
-            if (acc.Restriction)
-                throw new ArgumentException("Account is restricted!");
+                if (acc.Restriction)
+                    throw new ArgumentException("Account is restricted!");
 
-            if (acc.CreditCard.Active)
-                throw new ArgumentException("Card is already active!");
+                if (acc.CreditCard.Active)
+                    throw new ArgumentException("Card is already active!");
 
-            CreditCard creditCard = acc.CreditCard;
-            var filter = Builders<Account>.Filter.Eq("Number", acc.Number);
-            var update = Builders<Account>.Update.Set("CreditCard.Active", true);
-            await _accountCollection.UpdateOneAsync(filter, update);
-            creditCard.Active = true;
+                CreditCard creditCard = acc.CreditCard;
+                var filter = Builders<Account>.Filter.Eq("Number", acc.Number);
+                var update = Builders<Account>.Update.Set("CreditCard.Active", true);
+                await _accountCollection.UpdateOneAsync(filter, update);
+                creditCard.Active = true;
 
-            return creditCard;
+                return creditCard;
+            }
+            catch
+            {
+                throw;
+            }
         }
-
-
-
-
     }
 }

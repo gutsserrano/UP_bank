@@ -53,7 +53,7 @@ namespace Up_bank.EmployeeAPI.Controllers
         public async Task<ActionResult<Object>> GetEmployee(string cpf, bool deleted = false)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
-            else if (cpf.Count() == 14 ) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
             else { return BadRequest("The CPF is wrong!"); }
 
 
@@ -77,7 +77,7 @@ namespace Up_bank.EmployeeAPI.Controllers
                 employee.Address = address;
                 return employee;
             }
-            
+
             else if (DeletedEmployeeExists(cpf) == true && deleted)
             {
                 Address address = await _employeeService.GetAddress(deletedEmployee.AddressZipCode, deletedEmployee.AddressNumber);
@@ -92,24 +92,27 @@ namespace Up_bank.EmployeeAPI.Controllers
         [HttpPut("UpdateAccountRestriction/{accNumber}/{employeeCPF}/{restriction}")]
         public async Task<ActionResult<Account>> UpdateAccountRestriction(string accNumber, string employeeCPF, bool restriction)
         {
-            if (employeeCPF.Count() == 11) { employeeCPF = InsertMask(employeeCPF); }
-            else if (employeeCPF.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
-            else { return BadRequest("The CPF is wrong!"); }
-
-            Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
-            if (employee == null) return BadRequest("Employee not found");
-
-            if (employee.Manager == true)
+            try
             {
+                if (employeeCPF.Count() == 11) { employeeCPF = InsertMask(employeeCPF); }
+                else if (employeeCPF.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+                else { return BadRequest("The CPF is wrong!"); }
+
+                Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
+                if (employee == null) return BadRequest("Employee not found");
+
+                if (employee.Manager == false) return BadRequest("The employee isn't a manager");
+
                 Account account = await _employeeService.PutAproveAccount(accNumber, restriction, employeeCPF);
 
                 if (account == null) return NotFound("Account not found");
 
                 return Ok(account);
             }
-            else
-                return BadRequest("The employee isn't a manager");
-            
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
 
@@ -189,7 +192,7 @@ namespace Up_bank.EmployeeAPI.Controllers
             {
                 Address address = await _employeeService.GetAddressPostMethod(employeeDTO.AddressDTO);
 
-                if(address == null) { return BadRequest("This Zip Code cannot be found!"); }
+                if (address == null) { return BadRequest("This Zip Code cannot be found!"); }
 
                 employee = await _employeeService.CreateEmployee(employeeDTO, address);
 
