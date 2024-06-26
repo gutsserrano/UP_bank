@@ -15,8 +15,7 @@ namespace AccountAPI.Controllers
             _creditCardService = service;
         }
 
-        [HttpGet("{accNumber},{cardNumber}")]
-        // https://localhost:7244/api/creditcards/5725,1234567899990000 test
+        [HttpGet("{accNumber}")]
         public async Task<ActionResult<CreditCard>> Get(string accNumber, long cardNumber)
         {
             var account = await _creditCardService.GetAccount(accNumber);
