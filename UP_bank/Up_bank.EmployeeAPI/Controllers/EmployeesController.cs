@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using APICustomer.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,11 +21,12 @@ namespace Up_bank.EmployeeAPI.Controllers
     {
         private readonly UP_bankEmployeeAPIContext _context;
         private readonly EmployeeService _employeeService;
-
-        public EmployeesController(UP_bankEmployeeAPIContext context, EmployeeService employeeService)
+        private readonly APICustomerContext _customerAPIContext;
+        public EmployeesController(UP_bankEmployeeAPIContext context, EmployeeService employeeService, APICustomerContext customerAPIContext)
         {
             _context = context;
             _employeeService = employeeService;
+            _customerAPIContext = customerAPIContext;
         }
 
         // GET: api/Employees
@@ -88,6 +90,44 @@ namespace Up_bank.EmployeeAPI.Controllers
             else { return NotFound(); }
         }
 
+        // PUT: api/Employees/UpdateAccountRestriction/{accNumber}/{employeeCPF}/{restriction}
+        [HttpPut("UpdateAccountRestriction/{accNumber}/{employeeCPF}/{restriction}")]
+        public async Task<ActionResult<Account>> UpdateAccountRestriction(string accNumber, string employeeCPF, bool restriction)
+        {
+            if (employeeCPF.Count() == 11) { employeeCPF = InsertMask(employeeCPF); }
+            else if (employeeCPF.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
+            Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
+            if (employee == null) return BadRequest("Employee not found");
+
+            if (employee.Manager == true)
+            {
+                Account account = await _employeeService.PutAproveAccount(accNumber, restriction);
+
+                if (account == null) return NotFound("Account not found");
+
+                return Ok(account);
+            }
+            else
+                return BadRequest("The employee isn't a manager");
+            
+        }
+
+        // PUT: api/Employees/DefineAccountPerfil/{employeeCPF}
+        [HttpPost("DefineAccountPerfil/{employeeCPF}")]
+        public async Task<ActionResult<Account>> DefineAccountPerfil(string employeeCPF, AccountDTO accountDTO)
+        {
+            Employee employee = await _context.Employee.Where(e => e.Cpf == employeeCPF).FirstOrDefaultAsync();
+            if (employee == null) return BadRequest("Employee not found");
+
+            Account account = await _employeeService.DefineAccountPerfil(accountDTO);
+
+            if (account == null) return NotFound("Account not created");
+
+            return Ok(account);
+        }
+
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{cpf}")]
@@ -97,10 +137,9 @@ namespace Up_bank.EmployeeAPI.Controllers
             else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
             else { return BadRequest("The CPF is wrong!"); }
 
-
             if (cpf != employeeUpdateDTO.Cpf) { return BadRequest("This CPF doesn't corresponds to this employee"); }
 
-            Employee employee = await _context.Employee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
+            Employee employee = await _context.Employee.Where(e => e.Cpf == cpf).FirstOrDefaultAsync();
 
             if (employee == null) { return NotFound("This employee doesn't exists!"); }
 
@@ -135,6 +174,9 @@ namespace Up_bank.EmployeeAPI.Controllers
 
             if (employeeDTO.Cpf.Count() == 11) { employeeDTO.Cpf = InsertMask(employeeDTO.Cpf); }
             else if (employeeDTO.Cpf.Count() != 14 && employeeDTO.Cpf.Count() != 11) { return BadRequest("The CPF is wrong!"); }
+
+            Customer customer = await _customerAPIContext.Customer.Where(c => c.Cpf == employeeDTO.Cpf).FirstOrDefaultAsync();
+            if (customer.Cpf == employeeDTO.Cpf) { return BadRequest("There's a customer with this CPF."); }
 
             var cpfIstRegistered = await _context.FindAsync<Employee>(employeeDTO.Cpf);
             if (cpfIstRegistered != null) { return BadRequest("This CPF already exists!"); }
