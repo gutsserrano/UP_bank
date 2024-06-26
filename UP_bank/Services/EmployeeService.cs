@@ -180,7 +180,7 @@ namespace Services
                 {
                     account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
                 }
-                if ((int)response.StatusCode == 500)
+                else if ((int)response.StatusCode == 500)
                 {
                     throw new ArgumentException("Account is already in restriction status informed!");
                 }
