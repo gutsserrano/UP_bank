@@ -94,9 +94,9 @@ namespace APICustomer.Controllers
             }
             return customer;
         }
-        [HttpPut("RestrictCustomer/{cpf}")]
+        [HttpPut("RestrictCustomer/{cpf}/{restricted}")]
 
-        public async Task<ActionResult<Customer>> RestrictCustomer(string cpf)
+        public async Task<ActionResult<Customer>> RestrictCustomer(string cpf, bool restricted)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
             else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
@@ -114,12 +114,10 @@ namespace APICustomer.Controllers
                 return NotFound();
             }
 
-            customer.Restriction = true;
-            var result = await _customerServices.UpdateCustomerAccount(cpf, true);
+            customer.Restriction = restricted;
+            var result = await _customerServices.UpdateCustomerAccount(cpf, restricted);
 
-
-            if (result == true)
-
+            if (result)
             {
                 _context.Entry(customer).State = EntityState.Modified;
 
