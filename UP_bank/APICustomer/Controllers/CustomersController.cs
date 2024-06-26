@@ -94,6 +94,59 @@ namespace APICustomer.Controllers
             }
             return customer;
         }
+        [HttpPut("RestrictCustomer/{cpf}")]
+
+        public async Task<ActionResult<Customer>> RestrictCustomer(string cpf)
+        {
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
+            if (_context.Customer == null)
+            {
+                return NotFound();
+            }
+
+            var customer = await _context.Customer.FindAsync(cpf);
+
+            if (customer == null)
+            {
+                return NotFound();
+            }
+
+            customer.Restriction = true;
+            var result = await _customerServices.UpdateCustomerAccount(cpf, true);
+
+
+            if (result == true)
+
+            {
+                _context.Entry(customer).State = EntityState.Modified;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!CustomerExists(cpf))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return customer;
+            }
+            else
+            {
+                return BadRequest("Error to update the customer account.");
+            }
+        }
+
 
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

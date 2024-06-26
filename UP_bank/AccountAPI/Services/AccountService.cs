@@ -109,6 +109,8 @@ namespace AccountAPI.Services
 
         public async Task UpdateAccountCustomerRestriction(string customerCPF, CustomerRestrictionDTO customerRestrictionDTO)
         {
+
+            customerCPF = customerCPF.Replace(".", "").Replace("-", "").Trim();
             var accounts = await _accountCollection.Find(Builders<Account>.Filter.Empty).ToListAsync();
             var cpfMask = Convert.ToUInt64(customerCPF).ToString(@"000\.000\.000\-00");
             foreach (var account in accounts)

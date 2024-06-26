@@ -1,5 +1,8 @@
-﻿using Models;
+﻿using Humanizer;
+using Models;
 using Models.DTO;
+using Newtonsoft.Json;
+using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace APICustomer.Services
@@ -106,6 +109,21 @@ namespace APICustomer.Services
         public string InsertMask(string cpf)
         {
             return Convert.ToUInt64(cpf).ToString(@"000\.000\.000\-00");
-        }      
+        }
+        public async Task<bool> UpdateCustomerAccount(string cpf, bool Restrict)
+        {
+            HttpClient client = new HttpClient();
+            CustomerRestrictionDTO customerRestrictionDTO = new CustomerRestrictionDTO { Restriction = Restrict};
+            StringContent content = new(JsonConvert.SerializeObject(customerRestrictionDTO), Encoding.UTF8, "application/json");
+            var response = await client.PatchAsync($"https://localhost:7244/api/accounts/customer/{cpf}", content);
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }
