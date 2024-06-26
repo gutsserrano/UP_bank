@@ -25,7 +25,7 @@ namespace APICustomer.Controllers
         private readonly CustomerServices _customerServices;
         private readonly CustomerServices _verifyCpf;
 
-        public CustomersController(APICustomerContext context,IAddressApiService addressApiService, CustomerServices customerServices)
+        public CustomersController(APICustomerContext context, IAddressApiService addressApiService, CustomerServices customerServices)
         {
             _context = context;
             _addressApiService = addressApiService;
@@ -36,10 +36,10 @@ namespace APICustomer.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Customer>>> GetCustomer()
         {
-          if (_context.Customer == null)
-          {
-              return NotFound();
-          }
+            if (_context.Customer == null)
+            {
+                return NotFound();
+            }
             var customers = await _context.Customer.ToListAsync();
 
             foreach (var customer in customers)
@@ -63,13 +63,13 @@ namespace APICustomer.Controllers
         public async Task<ActionResult<Customer>> GetCustomerByCpf(string cpf)
         {
 
-            if (cpf.Length != 11)  { return BadRequest("The CPF isn't valid!"); }
+            if (cpf.Length != 11) { return BadRequest("The CPF isn't valid!"); }
             cpf = InsertMask(cpf);
 
             if (_context.Customer == null)
-          {
-              return NotFound();
-          }
+            {
+                return NotFound();
+            }
 
             var customer = await _context.Customer.FindAsync(cpf);
 
@@ -163,7 +163,7 @@ namespace APICustomer.Controllers
             Customer customer = await _context.Customer.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
 
             if (customer == null)
-             return NotFound("This customer doesn't exists!");
+                return NotFound("This customer doesn't exists!");
 
             _context.Entry(_customerServices.UpdateCustomer(customer, customerUpdateDTO)).State = EntityState.Modified;
 
@@ -191,10 +191,10 @@ namespace APICustomer.Controllers
         [HttpPost]
         public async Task<ActionResult<Customer>> PostCustomer(CustomerDTO customerDTO)
         {
-          if (_context.Customer == null)
-          {
-              return Problem("Entity set 'APICustomerContext.Customer' is null.");
-          }
+            if (_context.Customer == null)
+            {
+                return Problem("Entity set 'APICustomerContext.Customer' is null.");
+            }
 
             string cpfMask = _customerServices.RemoveMask(customerDTO.Cpf);
 
@@ -219,12 +219,12 @@ namespace APICustomer.Controllers
                 AddressZipCode = customerDTO.Address.ZipCode
             };
 
-           Address? address = await _addressApiService.GetAddress(new AddressDTO()
-           {
-               ZipCode = customerDTO.Address.ZipCode,
-               Number = customerDTO.Address.Number,
-               Complement = customerDTO.Address.Complement
-           });
+            Address? address = await _addressApiService.GetAddress(new AddressDTO()
+            {
+                ZipCode = customerDTO.Address.ZipCode,
+                Number = customerDTO.Address.Number,
+                Complement = customerDTO.Address.Complement
+            });
             if (address == null)
             {
                 address = await _addressApiService.CreateAddress(new AddressDTO()
@@ -288,9 +288,50 @@ namespace APICustomer.Controllers
 
             return Ok(customer);
         }
+
+        [HttpPost("{cpf}")]
+        public async Task<IActionResult> CustomerRestore(string cpf)
+        {
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
+            if (_context.Customer == null)
+            {
+                return NotFound();
+            }
+
+            var customerDelete = await _context.CustomerDelete.FindAsync(cpf);
+            if (customerDelete == null)
+            {
+                return NotFound();
+            }
+
+            var customer = new Customer
+            {
+                Cpf = customerDelete.Cpf,
+                Name = customerDelete.Name,
+                DtBirth = customerDelete.DtBirth,
+                Email = customerDelete.Email,
+                Income = customerDelete.Income,
+                Phone = customerDelete.Phone,
+                Sex = customerDelete.Sex,
+                Restriction = customerDelete.Restriction,
+                AddressNumber = customerDelete.AddressNumber,
+                AddressZipCode = customerDelete.AddressZipCode
+            };
+            _context.Customer.Add(customer);
+
+            _context.CustomerDelete.Remove(customerDelete);
+            await _context.SaveChangesAsync();
+
+            return Ok(customer);
+        }
+
+
         private bool CustomerExists(string cpf)
         {
-            if(cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
             return (_context.Customer?.Any(e => e.Cpf == cpf)).GetValueOrDefault();
         }
         private bool CustomerDeleteExists(string cpf)
