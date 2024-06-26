@@ -301,9 +301,11 @@ Consulta a API do VIACEP, a partir do CEP, informando apenas o número e complem
 
 ### 5. Definir o perfil de uma conta
 
-- **Endpoint**: `POST: api/Employees`
-- **Descrição**: Cadastra um novo funcionário.
-- **Parâmetros**: Nenhum.
+- **Endpoint**: `POST: api/Employees/DefineAccountPerfil/:employeeCPF`
+- **Descrição**: Define um perfil de uma conta.
+- **Parâmetros**:
+    - **employeeCPF**: string
+    - **deleted**: bool
 - **Corpo da requisição**:
     ```json
     {
@@ -388,7 +390,7 @@ Consulta a API do VIACEP, a partir do CEP, informando apenas o número e complem
 - **Descrição**: Edita a restrição de uma conta.
 - **Parâmetros**:
     - **accountNumber**: string 
-    - **cpf**: string
+    - **employeeCPF**: string
     - **restriction**: bool
 - **Exemplo de Resposta**:
     ```json
