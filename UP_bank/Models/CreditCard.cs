@@ -151,7 +151,7 @@ namespace Models
             }
 
             nameFormated.Append(" " + parts[parts.Length - 1]);
-            return nameFormated.ToString();            
+            return nameFormated.ToString().ToUpper();            
         }
 
         private DateTime CreateRandomExpirationDate()

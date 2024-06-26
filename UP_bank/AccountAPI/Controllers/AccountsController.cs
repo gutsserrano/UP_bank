@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Models.DTO;
+using System;
 using System.Net.Http;
 
 namespace AccountAPI.Controllers
@@ -67,7 +68,7 @@ namespace AccountAPI.Controllers
         {
             try
             {
-                if ((int)accountDTO.Profile < 0) return BadRequest("Profile inexistent.");
+                EProfile profile = (EProfile)Enum.Parse(typeof(EProfile), accountDTO.Profile);
 
                 var agency = await _accountService.GetAgency(accountDTO);       // Get Agency DTO Api
                 if (agency == null) return NotFound("Agency not found!");
@@ -75,7 +76,7 @@ namespace AccountAPI.Controllers
                 var customers = await _accountService.GetCustomer(accountDTO);  // Get List Customers DTO Api
                 if (customers == null) return NotFound("Customers not found!");
 
-                var account = await _accountService.CreateNewAccount(accountDTO, agency, customers);    // Create Account
+                var account = await _accountService.CreateNewAccount(accountDTO, agency, customers, profile);    // Create Account
                 if (account == null) return BadRequest("Could not create an account at this time!");
 
                 await _accountService.Post(account);    // Post Account

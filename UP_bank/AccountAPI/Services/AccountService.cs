@@ -339,7 +339,7 @@ namespace AccountAPI.Services
             return listCustomers;
         }
 
-        public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<AgencyCustomerDTO> customers)
+        public async Task<Account> CreateNewAccount(AccountDTO accountDTO, AccountAgencyDTO agency, List<AgencyCustomerDTO> customers, EProfile profile)
         {
             var allAccounts = await BuildList();
             var currentNumbers = allAccounts.Select(x => x.Number).ToList();
@@ -385,7 +385,7 @@ namespace AccountAPI.Services
 
             // GET Overdraft
             double overdraft = 0;
-            switch (accountDTO.Profile)
+            switch (profile)
             {
                 case EProfile.University:
                     overdraft = 500;
@@ -405,7 +405,7 @@ namespace AccountAPI.Services
                 Number = accountNumber,
                 Date = DateTime.Today,  // Default
                 //Profile = EProfile.Normal,
-                Profile = accountDTO.Profile,
+                Profile = profile,
                 Customers = customers,
                 Overdraft = overdraft,
                 Balance = 0,            // Default 

@@ -13,6 +13,6 @@ namespace Models.DTO
         public string OwnerCpf { get; set; }
         public string? DependentCpf { get; set; }
         [JsonRequired]
-        public EProfile Profile { get; set; }
+        public string Profile { get; set; }
     }
 }
