@@ -37,26 +37,6 @@ namespace AccountAPI.Services
             CreditCard creditCard;
             bool ok = false;
             var cpfs = account.Customers.Select(c => c.Cpf).ToList();
-            /*List<Customer> customers = new List<Customer>();
-
-            for (int i = 0; i < cpfs.Count; i++)
-            {
-                try
-                {
-                    var response = _httpClient.GetAsync($"https://localhost:7147/api/Customers/{cpfs[i]}").Result;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
-                        customers.Add(customer);
-                    }
-
-                }
-                catch (Exception)
-                {
-
-                    throw;
-                }
-            }*/
 
             do
             {
