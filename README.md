@@ -446,20 +446,18 @@ podem ser bloqueadas novamente.
 
 ## Conta
 
+```
+Account CREATE (POST)
+https://localhost:7244/api/accounts/
 
-### 1. Criar Conta
-- **Endpoint**: `POST: api/accounts`
-- **Descrição**: Cria uma nova conta.
-- **Parâmetros**: Nenhum.
-- **Exemplo de Envio**:
-  ```json
+dto:
 {
     "Agency" : "777",
     "OwnerCpf" : "811.201.240-77",
     "DependentCPF" : "",
     "Profile" : "Normal"
 }
-  ```
+
 
 Account GET
 https://localhost:7244/api/accounts/account/0727?deleted=false
@@ -594,8 +592,4 @@ dto:
 Account UPDATE CREDITCARD ACTIVATE (PUT)
 https://localhost:7244/api/creditcards/0727
 onde 0727 = número da conta para ativar o cartão
-
-
-
-
-
+```
