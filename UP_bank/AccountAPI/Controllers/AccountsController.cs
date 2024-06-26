@@ -222,7 +222,7 @@ namespace AccountAPI.Controllers
         [HttpGet("getAllAccounts")]
         public async Task<ActionResult<List<Account>>> GetAllAccounts()
         {
-            var lst = _accountService.BuildList();
+            var lst = await _accountService.BuildList();
 
             if (lst == null) return NotFound("No accounts were found!");
 
