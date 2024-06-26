@@ -1,5 +1,7 @@
 ﻿using Models;
 using Models.DTO;
+using MongoDB.Driver;
+using Newtonsoft.Json;
 using Services.AddressApiServices;
 using System;
 using System.Collections.Generic;
@@ -12,16 +14,16 @@ namespace Services
     public class EmployeeService
     {
         public readonly UPBankAddressApi _api;
-
-        public EmployeeService(UPBankAddressApi api) 
+        private readonly HttpClient _httpClient = new HttpClient();
+        public EmployeeService(UPBankAddressApi api)
         {
             _api = api;
         }
-        
-        
+
+
 
         //CRUD METHODS
-
+        #region Crud Methods
         public async Task<Address> GetAddress(string zipCode, string number)
         {
             Address? address = await _api.GetAddress(new AddressDTO { ZipCode = zipCode, Number = number });
@@ -70,7 +72,7 @@ namespace Services
 
                 return employee;
             }
-            catch (Exception){ throw new Exception("Occurred an error while creating employee"); }
+            catch (Exception) { throw new Exception("Occurred an error while creating employee"); }
         }
 
         public Employee UpdateEmployee(Employee employee, EmployeeUpdateDTO employeeUpdateDTO)
@@ -90,35 +92,6 @@ namespace Services
             }
             catch { throw new Exception("Occurred an error while updating employee"); }
         }
-
-        public async Task<Employee> DeleteEmployee(Employee employee)
-        {
-
-            DeletedEmployee deletedEmployee;
-            try
-            {
-                deletedEmployee = new()
-                {
-                    Cpf = employee.Cpf,
-                    Name = employee.Name,
-                    DtBirth = employee.DtBirth,
-                    Sex = employee.Sex,
-                    Income = employee.Income,
-                    Email = employee.Email,
-                    Phone = employee.Phone,
-                    AddressZipCode = employee.AddressZipCode,
-                    AddressNumber = employee.AddressNumber,
-                    Manager = employee.Manager,
-                    Register = employee.Register,
-                };
-
-                return deletedEmployee;
-
-            }
-            catch { throw new Exception("Occurred an error while deleting employee"); }
-        }
-
-        //
 
         //Validate CPF
         #region Validate CPF
@@ -190,11 +163,109 @@ namespace Services
         }
         #endregion
 
-        //ANOTHER METHODS
-        public void AproveAccount()
-        { }
+        #endregion
 
-        public void DefineAccountPerfil()
-        { }
+        public async Task<Account> PutAproveAccount(string accNumber, bool restriction, string employeeCPF)
+        {
+            Account account = null;
+
+            try
+            {
+                AccountRestrictionDTO dto = new AccountRestrictionDTO { Restriction = restriction, ManagerCpf = employeeCPF };
+
+                StringContent content = new(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
+
+                var response = _httpClient.PatchAsync($"https://localhost:7244/api/accounts/account/{accNumber}", content).Result;
+                if ((int) response.StatusCode == 200)
+                {
+                    account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return account;
+        }
+
+        public async Task<Account> GetAccount(string accNumber)
+        {
+            Account account = null;
+
+            try
+            {
+                var response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/account/{accNumber}?deleted=false").Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
+                }
+                else
+                {
+                    response = _httpClient.GetAsync($"https://localhost:7244/api/accounts/account/{accNumber}?deleted=true").Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return account;
+        }
+
+        public async Task<Account> DefineAccountPerfil(AccountDTO accountDTO)
+        {
+            Account account = null;
+
+            try
+            {
+                StringContent content = new(JsonConvert.SerializeObject(accountDTO), Encoding.UTF8, "application/json");
+
+                var response = _httpClient.PostAsync($"https://localhost:7244/api/accounts/", content).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    account = JsonConvert.DeserializeObject<Account>(response.Content.ReadAsStringAsync().Result);
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return account;
+        }
+
+        public async Task<Customer> GetCustomer(string cpf)
+        {
+            Customer customer = null;
+
+            try
+            {
+                var response = _httpClient.GetAsync($"https://localhost:7147/api/Customers/{cpf}").Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    customer = JsonConvert.DeserializeObject<Customer>(response.Content.ReadAsStringAsync().Result);
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return customer;
+        }
     }
 }
