@@ -72,10 +72,11 @@ namespace AccountAPI.Services
 
             return creditCard;
         }
-        public async Task<CreditCard> ActiveCard(string account, long card)
+        public async Task<CreditCard> ActiveCard(string account)
         {
 
-            var acc = await _accountCollection.Find(x => x.Number == account && x.CreditCard.Number == card).FirstOrDefaultAsync();
+           var acc = await _accountCollection.Find(x => x.Number == account).FirstOrDefaultAsync();
+            
 
             if (acc == null)
                 throw new ArgumentException("Account or card not found!");
