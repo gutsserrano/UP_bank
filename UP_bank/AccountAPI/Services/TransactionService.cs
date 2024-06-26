@@ -142,6 +142,8 @@ namespace AccountAPI.Services
             int Type = (int)dto.Type;
             var accountDestiny = await GetAccount(dto.AccountDestinyNumber);
 
+            if ((int)dto.Type < 0 || (int)dto.Type > 4) return "Transaction type does not exist!";
+
             if (Type != 3 && (accountDestiny != null || dto.AccountDestinyNumber != String.Empty)) return "Operation not allowed, you can only inform the Destiny Account in a Transfer type transaction!";
 
             if (Type == 0 || Type == 3 || Type == 4) // Subtract balance
