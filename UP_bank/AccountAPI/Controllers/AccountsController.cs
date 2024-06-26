@@ -84,6 +84,7 @@ namespace AccountAPI.Controllers
 
                 var creditCard = await _creditCardService.Post(customers, account); // Post Credit Card to Account
                 if (creditCard == null) return BadRequest("Account was created but without a credit card.");
+                account.CreditCard = creditCard;
 
                 return Ok(account);
             }

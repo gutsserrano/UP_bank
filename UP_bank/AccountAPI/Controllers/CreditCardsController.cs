@@ -47,7 +47,7 @@ namespace AccountAPI.Controllers
             return Ok(await _creditCardService.Post(null, account));
         }
 
-        [HttpPut("{accNumber}, {cardNumber}")]
+        [HttpPut("{accNumber}")]
         // https://localhost:7244/api/creditcards/5725 test
         public async Task<ActionResult<CreditCard>> Active(string accNumber)
         {
