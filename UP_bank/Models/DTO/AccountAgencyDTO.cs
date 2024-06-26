@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace Models.DTO
 {
-    public class AddressDTO
+    public class AccountAgencyDTO
     {
-        public string ZipCode { get; set; }
         public string Number { get; set; }
-        public string Complement { get; set; }
+        public bool Restriction { get; set; }
     }
 }
