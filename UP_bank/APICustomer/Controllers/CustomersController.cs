@@ -216,7 +216,7 @@ namespace APICustomer.Controllers
                 Sex = customerDTO.Sex,
                 Restriction = customerDTO.Restriction,
                 AddressNumber = customerDTO.Address.Number,
-                AddressZipCode = customerDTO.Address.ZipCode
+                AddressZipCode = customerDTO.Address.ZipCode,
             };
 
            Address? address = await _addressApiService.GetAddress(new AddressDTO()

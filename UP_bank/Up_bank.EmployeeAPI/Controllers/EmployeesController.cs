@@ -235,6 +235,49 @@ namespace Up_bank.EmployeeAPI.Controllers
             return Ok(deletedEmployee);
         }
 
+        [HttpPost("{cpf}")]
+        public async Task<IActionResult> RestoreEmployee(string cpf)
+        {
+            if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
+            else if (cpf.Count() == 14) { return BadRequest("Insert the CPF without any formatting in the URL."); }
+            else { return BadRequest("The CPF is wrong!"); }
+
+            if (_context.DeletedEmployee == null)
+            {
+                return NotFound();
+            }
+
+            var employeeDeleted = await _context.DeletedEmployee.Where(p => p.Cpf == cpf).FirstOrDefaultAsync();
+
+            if (employeeDeleted == null)
+            {
+                return NotFound();
+            }
+
+            var employee = new Employee
+            {
+                Cpf = employeeDeleted.Cpf,
+                DtBirth = employeeDeleted.DtBirth,
+                Email = employeeDeleted.Email,
+                Income = employeeDeleted.Income,
+                Manager = employeeDeleted.Manager,
+                Name = employeeDeleted.Name,
+                Phone = employeeDeleted.Phone,
+                Register = employeeDeleted.Register,
+                Sex = employeeDeleted.Sex,
+                AddressNumber = employeeDeleted.AddressNumber,
+                AddressZipCode = employeeDeleted.AddressZipCode
+            };
+
+            _context.Employee.Add(employee);
+
+            _context.DeletedEmployee.Remove(employeeDeleted);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(employee);
+        }
+
         private bool EmployeeExists(string cpf)
         {
             if (cpf.Count() == 11) { cpf = InsertMask(cpf); }
