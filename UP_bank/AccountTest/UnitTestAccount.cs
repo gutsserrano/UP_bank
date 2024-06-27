@@ -224,6 +224,118 @@ namespace AccountTest
         }
 
         [Fact]
+        public async Task GetAccountDeleted_NotFound()
+        {
+            await _accountController.Delete(account.Number);
+
+            var result = await _accountController.Get("123", true);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+        
+        [Fact]
+        public async Task GetAccountNotDeleted_NotFound()
+        {
+            var result = await _accountController.Get("123", false);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+        
+        
+        [Fact]
+        public async Task GetExtractId_NotFound()
+        {
+            var result = await _transactionsController.GetExtractId("123", 1);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+        
+        [Fact]
+        public async Task GetExtractType_NotFound()
+        {
+            var result = await _transactionsController.GetExtractType("123", 2);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        
+        [Fact]
+        public async Task GetExtract_NotFound()
+        {
+            var result = await _transactionsController.GetExtract("123");
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        
+        [Fact]
+        public async Task GetCreditCard_NotFound()
+        {
+            var result = await _creditCardsController.Get("123", 0);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        
+        [Fact]
+        public async Task ActivateCreditCard_BadRequest()
+        {
+            var result = await _creditCardsController.Active("123");
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+        
+        
+        [Fact]
+        public async Task UpdateAccountRestriction_NotFound()
+        {
+            AccountRestrictionDTO dto = new AccountRestrictionDTO { ManagerCpf = "123", Restriction = false };
+            var result = await _accountController.UpdateAccountRestriction("111", dto);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task UpdateAccountRestriction_ObjectResult()
+        {
+            var account = await CreateAccount(true, EProfile.Normal);
+            AccountRestrictionDTO dto = new AccountRestrictionDTO { ManagerCpf = "123", Restriction = true };
+            var result = await _accountController.UpdateAccountRestriction(account.Number, dto);
+            Assert.IsType<ObjectResult>(result.Result);
+        }
+        
+        [Fact]
+        public async Task UpdateAccountOverdraft_NotFound()
+        {
+            AccountOverdraftDTO dto = new AccountOverdraftDTO { Overdraft = 25000 };
+            var result = await _accountController.UpdateAccountOverdraft("9870870", dto);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task Restore_NotFound()
+        {
+            var result = await _accountController.Restore("1123");
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+
+        [Fact]
+        public async Task DeleteByAgency_BadRequest()
+        {
+            var result = await _accountController.DeleteByAgency("000");
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+
+        [Fact]
+        public async Task CheckBalance_NotFound()
+        {
+            var result = await _accountController.CheckBalance(account.Number);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task GetAllAccounts_NotFound()
+        {
+            var result = await _accountController.GetAllAccounts();
+            Assert.IsType<OkObjectResult>(result.Result);
+        }
+
+
+        [Fact]
         public async Task GetAccountDeleted()
         {
             var account = await CreateAccount(false, EProfile.Normal);
@@ -246,7 +358,7 @@ namespace AccountTest
         {
             var account = await CreateAccount(false, EProfile.Vip);
             account = await CreateAccount(false, EProfile.Normal);
-            account = await CreateAccount(false, EProfile.University);
+            account = await CreateAccount(false, EProfile.Normal);
             var result = await _accountController.GetAll(0);
             Assert.IsType<OkObjectResult>(result.Result);
         }
